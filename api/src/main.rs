@@ -1,6 +1,12 @@
-use poem::{get, handler, listener::TcpListener, post, web::{Json, Path}, Route, Server};
-use store::store::Store;
 use crate::{request_input::CreateWebsiteInput, request_output::CreateWebsiteOutput};
+use poem::{
+    get, handler,
+    listener::TcpListener,
+    post,
+    web::{Json, Path},
+    Route, Server,
+};
+use store::store::Store;
 
 pub mod request_input;
 pub mod request_output;
@@ -11,7 +17,7 @@ fn create_website(Json(data): Json<CreateWebsiteInput>) -> Json<CreateWebsiteOut
     let s = Store::default().unwrap();
     let id = s.get_website();
     Json(CreateWebsiteOutput {
-        id: format!("Url:{url}, ID: {id}")
+        id: format!("Url:{url}, ID: {id}"),
     })
 }
 

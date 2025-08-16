@@ -1,7 +1,8 @@
-use diesel::prelude::*;
 use crate::config::Config;
+use diesel::prelude::*;
+
 pub struct Store {
-    pub conn: PgConnection
+    pub conn: PgConnection,
 }
 
 impl Store {
