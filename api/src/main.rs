@@ -1,5 +1,5 @@
 use poem::{get, handler, listener::TcpListener, post, web::{Json, Path}, Route, Server};
-use store::Store;
+use store::store::Store;
 use crate::{request_input::CreateWebsiteInput, request_output::CreateWebsiteOutput};
 
 pub mod request_input;
@@ -8,10 +8,10 @@ pub mod request_output;
 #[handler]
 fn create_website(Json(data): Json<CreateWebsiteInput>) -> Json<CreateWebsiteOutput> {
     let url = data.url;
-    let s = Store{};
-    let id = s.create_website();
+    let s = Store::default().unwrap();
+    let id = s.get_website();
     Json(CreateWebsiteOutput {
-        id: format!("Url:{}, ID: {}",url, id)
+        id: format!("Url:{url}, ID: {id}")
     })
 }
 
