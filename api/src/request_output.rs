@@ -4,3 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct CreateWebsiteOutput {
     pub id: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateUserOutput {
+    pub jwt: String,
+    pub success: bool
+}
