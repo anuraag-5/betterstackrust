@@ -6,6 +6,7 @@ use poem::{
     web::{Json, Path},
     Route, Server,
 };
+use dotenvy::dotenv;
 use store::store::Store;
 
 pub mod request_input;
@@ -28,6 +29,7 @@ fn get_status(Path(website_id): Path<String>) -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+    dotenv().ok();
     let app = Route::new()
         .at("/website/:website_id", get(get_status))
         .at("/website", post(create_website));
