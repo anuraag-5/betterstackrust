@@ -5,6 +5,7 @@ pub struct CreateWebsiteInput {
     pub url: String,
 }
 
+
 #[derive(Deserialize, Serialize)]
 pub struct CreateUserInput {
     pub username: String,
