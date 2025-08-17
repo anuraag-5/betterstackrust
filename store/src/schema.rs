@@ -25,7 +25,7 @@ diesel::table! {
     website (id) {
         id -> Text,
         url -> Text,
-        timeAdded -> Timestamp,
+        time_added -> Timestamp,
         user_id -> Text,
     }
 }
