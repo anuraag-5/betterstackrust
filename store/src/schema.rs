@@ -14,7 +14,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    user (id) {
+    users (id) {
         id -> Text,
         email -> Text,
         password -> Text,
@@ -44,13 +44,13 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(website -> user (user_id));
+diesel::joinable!(website -> users (user_id));
 diesel::joinable!(website_tick -> region (region_id));
 diesel::joinable!(website_tick -> website (website_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     region,
-    user,
+    users,
     website,
     website_tick,
 );

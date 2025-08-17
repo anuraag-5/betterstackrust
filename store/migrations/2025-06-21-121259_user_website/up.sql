@@ -39,7 +39,7 @@ ALTER TABLE "website_tick" ADD CONSTRAINT "website_tick_website_id_fkey" FOREIGN
 ALTER TABLE "website" ADD COLUMN     "user_id" TEXT NOT NULL;
 
 -- CreateTable
-CREATE TABLE "user" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
