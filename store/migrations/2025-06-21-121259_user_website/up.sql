@@ -39,7 +39,7 @@ ALTER TABLE "website_tick" ADD CONSTRAINT "website_tick_website_id_fkey" FOREIGN
 ALTER TABLE "website" ADD COLUMN     "user_id" TEXT NOT NULL;
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE "user" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
@@ -50,3 +50,4 @@ CREATE TABLE "users" (
 -- AddForeignKey
 ALTER TABLE "website" ADD CONSTRAINT "website_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "website_tick" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "user" RENAME TO users;

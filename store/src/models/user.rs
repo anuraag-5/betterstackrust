@@ -3,7 +3,7 @@ use diesel::{prelude::*, result::Error};
 use uuid::Uuid;
 
 #[derive(Queryable, Insertable, Selectable)]
-#[diesel(table_name = crate::schema::user)]
+#[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 struct User {
     id: String,
@@ -19,7 +19,7 @@ impl Store {
             password: user_password,
         };
 
-        let result = diesel::insert_into(crate::schema::user::table)
+        let result = diesel::insert_into(crate::schema::users::table)
             .values(new_user)
             .returning(User::as_returning())
             .get_result(&mut self.conn);
@@ -35,9 +35,9 @@ impl Store {
     }
     
     pub fn sign_in(&mut self, input_email: String, user_password: String) -> Result<bool, Error> {
-        use crate::schema::user::dsl::*;
+        use crate::schema::users::dsl::*;
 
-        let signed_in_user = user
+        let signed_in_user = users
             .filter(email.eq(input_email))
             .select(User::as_select())
             .load(&mut self.conn);
