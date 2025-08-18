@@ -16,6 +16,7 @@ use store::store::Store;
 
 pub mod request_input;
 pub mod request_output;
+pub mod route;
 
 #[handler]
 fn create_website(
