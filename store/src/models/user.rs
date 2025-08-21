@@ -34,7 +34,7 @@ impl Store {
         }
     }
     
-    pub fn sign_in(&mut self, input_email: String, user_password: String) -> Result<bool, Error> {
+    pub fn sign_in(&mut self, input_email: String, user_password: String) -> Result<String, Error> {
         use crate::schema::users::dsl::*;
 
         let signed_in_user = users
@@ -44,14 +44,14 @@ impl Store {
 
         match signed_in_user {
             Ok(u) => {
-                if u[0].password != user_password {
-                    return Ok(false);
+                if u.len() > 0 && u[0].password == user_password {
+                    Ok(u[0].id.to_string())
                 } else {
-                    return Ok(true);
+                    Err(diesel::result::Error::NotFound)
                 }
             }
 
-            Err(_) => Ok(false),
+            Err(_) => Err(diesel::result::Error::NotFound)
         }
     }
 }

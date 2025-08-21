@@ -48,6 +48,19 @@ CREATE TABLE "user" (
 );
 
 -- AddForeignKey
-ALTER TABLE "website" ADD CONSTRAINT "website_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "website_tick" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE "user" RENAME TO users;
+-- 1. Add FK before renaming "user"
+ALTER TABLE "website" 
+ADD CONSTRAINT "website_user_id_fkey" 
+FOREIGN KEY ("user_id") REFERENCES "user"("id") 
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- 2. Add column with default timestamp
+ALTER TABLE "website_tick" 
+ADD COLUMN "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- 3. Rename table from "user" to "users"
+ALTER TABLE "user" RENAME TO "users";
+
+-- 4. Add unique constraint on email
+ALTER TABLE "users" 
+ADD CONSTRAINT "U_email" UNIQUE ("email");
