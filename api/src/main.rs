@@ -1,6 +1,6 @@
 use dotenvy::dotenv;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
-use std::sync::{Arc, Mutex};
+use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
 use crate::route::{
     user::{create_user, sign_in_user},
@@ -14,8 +14,11 @@ pub mod auth_middleware;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+
     dotenv().ok();
-    let s = Arc::new(Mutex::new(Store::default().unwrap()));
+
+    let s = Arc::new(Mutex::new(Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?));
+
     let app = Route::new()
         .at("/api/website/:website_id", get(get_status))
         .at("/api/website", post(create_website))
