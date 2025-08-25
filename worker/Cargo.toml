@@ -4,5 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
 dotenvy = "0.15"
+redis = { version = "0.32.5", features = ["tokio-comp"] }
+uuid = { version = "1.17.0", features = ["v4"]}
+diesel = { version = "2.2.0", features = ["postgres", "chrono"] }
 redisstreams = { path = "../redisstreams" }
+store = { path = "../store" } 

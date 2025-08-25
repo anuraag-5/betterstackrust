@@ -12,11 +12,13 @@ impl Store {
         Ok(Self { conn: connection })
     }
 
-    pub fn get_users_website(&mut self) -> Result<Vec<(String, String)>, diesel::result::Error> {
+    pub fn get_all_websites(&mut self) -> Result<Vec<(String, String, String)>, diesel::result::Error> {
         use crate::schema::website::dsl::*;
-
-        let websites = website.select((url, id)).limit(5).load::<(String, String)>(&mut self.conn);
-
-        websites
+    
+        let websites = website
+            .select((url, id, user_id))
+            .load::<(String, String, String)>(&mut self.conn)?;
+    
+        Ok(websites)
     }
 }

@@ -1,6 +1,5 @@
 -- Your SQL goes here
 -- CreateEnum
-CREATE TYPE "website_status" AS ENUM ('Up', 'Down', 'Unknown');
 
 -- CreateTable
 CREATE TABLE "website" (
@@ -23,7 +22,7 @@ CREATE TABLE "region" (
 CREATE TABLE "website_tick" (
     "id" TEXT NOT NULL,
     "response_time_ms" INTEGER NOT NULL,
-    "status" "website_status" NOT NULL,
+    "status" TEXT NOT NULL,
     "region_id" TEXT NOT NULL,
     "website_id" TEXT NOT NULL,
 

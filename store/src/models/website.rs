@@ -13,6 +13,17 @@ pub struct Website {
     pub time_added: NaiveDateTime,
 }
 
+#[derive(Queryable, Insertable, Selectable)]
+#[diesel(table_name = crate::schema::website_tick)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct WebsiteTick {
+    pub id: String,
+    pub response_time_ms: i32,
+    pub status: String,
+    pub region_id: String,
+    pub website_id: String
+}
+
 impl Store {
     pub fn create_website(&mut self, u_i: String, new_url: String) -> Result<Website, Error> {
         let new_website = Website {

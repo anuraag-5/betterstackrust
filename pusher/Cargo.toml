@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 redisstreams = { path = "../redisstreams" }
 store = { path = "../store" }
