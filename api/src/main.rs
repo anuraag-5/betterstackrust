@@ -3,8 +3,7 @@ use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
 use crate::route::{
-    user::{create_user, sign_in_user},
-    website::{create_website, get_status},
+    app::{snippet, track}, user::{create_user, sign_in_user}, website::{create_website, get_status}
 };
 
 pub mod request_input;
@@ -24,6 +23,8 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/website", post(create_website))
         .at("/api/user/signup", post(create_user))
         .at("/api/user/signin", get(sign_in_user))
+        .at("/api/snippet", get(snippet))
+        .at("/api/track", post(track))
         .data(s);
     Server::new(TcpListener::bind("0.0.0.0:3000"))
         .run(app)
