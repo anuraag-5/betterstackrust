@@ -1,5 +1,8 @@
 use dotenvy::dotenv;
+use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
+
+use poem::middleware::Cors;
 use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
 use crate::route::{
@@ -18,6 +21,9 @@ async fn main() -> Result<(), std::io::Error> {
 
     let s = Arc::new(Mutex::new(Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?));
 
+    let cors = Cors::new()
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS]);
+
     let app = Route::new()
         .at("/api/website/:website_id", get(get_status))
         .at("/api/website", post(create_website))
@@ -25,8 +31,10 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/user/signin", get(sign_in_user))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
-        .data(s);
-    Server::new(TcpListener::bind("0.0.0.0:3000"))
+        .data(s)
+        .with(cors);
+
+    Server::new(TcpListener::bind("0.0.0.0:3001"))
         .run(app)
         .await
 }
