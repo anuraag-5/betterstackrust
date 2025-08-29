@@ -11,14 +11,4 @@ impl Store {
         let connection = PgConnection::establish(&config.db_url)?;
         Ok(Self { conn: connection })
     }
-
-    pub fn get_all_websites(&mut self) -> Result<Vec<(String, String, String)>, diesel::result::Error> {
-        use crate::schema::website::dsl::*;
-    
-        let websites = website
-            .select((url, id, user_id))
-            .load::<(String, String, String)>(&mut self.conn)?;
-    
-        Ok(websites)
-    }
 }

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use url::Url;
 
 use poem::{handler, http::header, web::{Data, Json}, Response};
-use store::{models::website::{PageVisit}, store::Store};
+use store::{models::app::PageVisit, store::Store};
 
 use crate::request_input::TrackingInput;
 
