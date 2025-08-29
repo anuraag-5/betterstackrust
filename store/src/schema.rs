@@ -1,6 +1,18 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    page_visits (id) {
+        id -> Int8,
+        website_id -> Text,
+        visitor_id -> Text,
+        page_url -> Text,
+        referrer -> Text,
+        user_agent -> Text,
+        visited_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     region (id) {
         id -> Text,
         name -> Text,
@@ -35,11 +47,13 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(page_visits -> website (website_id));
 diesel::joinable!(website -> users (user_id));
 diesel::joinable!(website_tick -> region (region_id));
 diesel::joinable!(website_tick -> website (website_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    page_visits,
     region,
     users,
     website,

@@ -86,6 +86,7 @@ dependencies = [
  "serde",
  "store",
  "tokio",
+ "url",
 ]
 
 [[package]]

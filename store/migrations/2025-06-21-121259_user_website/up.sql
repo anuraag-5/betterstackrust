@@ -4,7 +4,7 @@
 -- CreateTable
 CREATE TABLE "website" (
     "id" TEXT NOT NULL,
-    "url" TEXT NOT NULL,
+    "url" TEXT UNIQUE NOT NULL,
     "time_added" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Website_pkey" PRIMARY KEY ("id")
@@ -13,7 +13,7 @@ CREATE TABLE "website" (
 -- CreateTable
 CREATE TABLE "region" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT UNIQUE NOT NULL,
 
     CONSTRAINT "Region_pkey" PRIMARY KEY ("id")
 );
@@ -63,3 +63,13 @@ ALTER TABLE "user" RENAME TO "users";
 -- 4. Add unique constraint on email
 ALTER TABLE "users" 
 ADD CONSTRAINT "U_email" UNIQUE ("email");
+
+CREATE TABLE page_visits (
+    id BIGSERIAL PRIMARY KEY,
+    website_id TEXT REFERENCES website(id) ON DELETE CASCADE NOT NULL,
+    visitor_id TEXT NOT NULL,
+    page_url TEXT NOT NULL,
+    referrer TEXT NOT NULL,
+    user_agent TEXT NOT NULL,
+    visited_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);

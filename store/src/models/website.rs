@@ -1,4 +1,4 @@
-use crate::store::Store;
+use crate::{schema::page_visits, store::Store};
 use chrono::{NaiveDateTime, Utc};
 use diesel::{prelude::*, result::Error};
 use uuid::Uuid;
@@ -21,7 +21,18 @@ pub struct WebsiteTick {
     pub response_time_ms: i32,
     pub status: String,
     pub region_id: String,
-    pub website_id: String
+    pub website_id: String,
+}
+
+#[derive(Queryable, Insertable, Selectable)]
+#[diesel(table_name = crate::schema::page_visits)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct PageVisit {
+    pub visitor_id: String,
+    pub page_url: String,
+    pub referrer: String,
+    pub user_agent: String,
+    pub website_id: String,
 }
 
 impl Store {
@@ -44,7 +55,11 @@ impl Store {
         }
     }
 
-    pub fn get_website(&mut self, input_website_id: String, input_user_id: String) -> Result<Website, Error> {
+    pub fn get_website(
+        &mut self,
+        input_website_id: String,
+        input_user_id: String,
+    ) -> Result<Website, Error> {
         use crate::schema::website::dsl::*;
 
         let website_result = website
@@ -57,5 +72,25 @@ impl Store {
             Ok(w) => Ok(w),
             Err(e) => Err(e),
         }
+    }
+
+    pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
+        use crate::schema::website::dsl::*;
+
+        let found_website = website
+            .filter(url.eq(input_url))
+            .select(Website::as_select())
+            .first(&mut self.conn)?;
+
+        Ok(found_website)
+    }
+
+    pub fn store_tracks(&mut self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
+        let created_page_visit = diesel::insert_into(page_visits::table)
+            .values(page_visit_data)
+            .returning(PageVisit::as_returning())
+            .get_result(&mut self.conn)?;
+
+        Ok(created_page_visit)
     }
 }
