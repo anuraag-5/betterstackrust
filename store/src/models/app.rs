@@ -1,5 +1,5 @@
 use crate::{schema::page_visits, store::Store};
-use diesel::{dsl::count, prelude::*, result::Error, sql_types::BigInt};
+use diesel::{dsl::count, prelude::*, result::Error};
 
 #[derive(Queryable, Insertable, Selectable)]
 #[diesel(table_name = crate::schema::page_visits)]
