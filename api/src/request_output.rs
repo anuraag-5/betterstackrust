@@ -23,3 +23,9 @@ pub struct GetWebsiteOutput {
     pub url: String,
     pub success: bool
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct TotalViewsOutput {
+    pub total_views: i64,
+    pub success: bool
+}

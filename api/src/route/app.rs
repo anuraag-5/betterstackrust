@@ -1,10 +1,15 @@
 use std::sync::{Arc, Mutex};
 use url::Url;
 
-use poem::{handler, http::header, web::{Data, Json}, Response};
+use poem::{
+    handler,
+    http::header,
+    web::{Data, Json, Path},
+    Response,
+};
 use store::{models::app::PageVisit, store::Store};
 
-use crate::request_input::TrackingInput;
+use crate::{request_input::TrackingInput, request_output::TotalViewsOutput};
 
 #[handler]
 pub fn snippet() -> Response {
@@ -65,44 +70,59 @@ pub fn snippet() -> Response {
 }
 
 #[handler]
-pub fn track(
-  Json(data): Json<TrackingInput>,
-  Data(s):Data<&Arc<Mutex<Store>>>
-){
-  let page_url = data.page_url;
-  let visitor_id = data.visitor_id;
-  let referrer = data.referrer;
-  let user_agent = data.user_agent;
+pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>) {
+    let page_url = data.page_url;
+    let visitor_id = data.visitor_id;
+    let referrer = data.referrer;
+    let user_agent = data.user_agent;
 
-  let parsed_page_url = Url::parse(&page_url);
+    let parsed_page_url = Url::parse(&page_url);
 
-  match parsed_page_url {
-      Ok(url) => {
-        let domain = url.domain().unwrap();
-        let current_path = url.path();
+    match parsed_page_url {
+        Ok(url) => {
+            let domain = url.domain().unwrap();
+            let current_path = url.path();
 
-        let mut locked_s = s.lock().unwrap();
-        let website = locked_s.search_website(domain);
+            let mut locked_s = s.lock().unwrap();
+            let website = locked_s.search_website(domain);
 
-        match website {
-            Ok(w) => {
-              let page_visit = PageVisit {
-                visitor_id,
-                referrer,
-                user_agent,
-                page_url: current_path.to_string(),
-                website_id: w.id
-              };
+            match website {
+                Ok(w) => {
+                    let page_visit = PageVisit {
+                        visitor_id,
+                        referrer,
+                        user_agent,
+                        page_url: current_path.to_string(),
+                        website_id: w.id,
+                    };
 
-              let _inserted_data = locked_s.store_tracks(page_visit);
-              
-            },
-            Err(e) => {
-              println!("{}",e.to_string())
+                    let _inserted_data = locked_s.store_tracks(page_visit);
+                }
+                Err(e) => {
+                    println!("{}", e.to_string())
+                }
             }
         }
+        Err(_) => {}
+    }
+}
 
-      },
-      Err(_) => {}
-  }
+#[handler]
+pub fn total_views(
+    Path(w_id): Path<String>,
+    Data(s): Data<&Arc<Mutex<Store>>>,
+) -> Json<TotalViewsOutput> {
+    let mut locked_s = s.lock().unwrap();
+    let res = locked_s.get_total_views(w_id);
+
+    match res {
+        Ok(count) => Json(TotalViewsOutput {
+            total_views: count,
+            success: true,
+        }),
+        Err(_) => Json(TotalViewsOutput {
+            total_views: 0,
+            success: false,
+        }),
+    }
 }

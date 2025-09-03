@@ -5,6 +5,7 @@ use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 use poem::middleware::Cors;
 use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
+use crate::route::app::total_views;
 use crate::route::{
     app::{snippet, track}, user::{create_user, sign_in_user}, website::{create_website, get_status}
 };
@@ -31,6 +32,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/user/signin", get(sign_in_user))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
+        .at("/api/totalviews/:w_id", get(total_views))
         .data(s)
         .with(cors);
 
