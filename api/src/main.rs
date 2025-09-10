@@ -2,7 +2,7 @@ use dotenvy::dotenv;
 use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
-use poem::middleware::Cors;
+use poem::middleware::{Cors, CookieJarManager};
 use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
 use crate::route::app::total_views;
@@ -23,18 +23,20 @@ async fn main() -> Result<(), std::io::Error> {
     let s = Arc::new(Mutex::new(Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?));
 
     let cors = Cors::new()
-        .allow_methods([Method::GET, Method::POST, Method::OPTIONS]);
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_credentials(true);
 
     let app = Route::new()
         .at("/api/website/:website_id", get(get_status))
         .at("/api/website", post(create_website))
         .at("/api/user/signup", post(create_user))
-        .at("/api/user/signin", get(sign_in_user))
+        .at("/api/user/signin", post(sign_in_user))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
         .at("/api/totalviews/:w_id", get(total_views))
         .data(s)
-        .with(cors);
+        .with(cors)
+        .with(CookieJarManager::new());
 
     Server::new(TcpListener::bind("0.0.0.0:3001"))
         .run(app)

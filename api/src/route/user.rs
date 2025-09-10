@@ -7,7 +7,7 @@ use crate::{
 use jsonwebtoken::{encode, EncodingKey, Header};
 use poem::{
     handler,
-    http::StatusCode,
+    http::{header, StatusCode},
     web::{Data, Json},
     Error, Response,
 };
@@ -62,15 +62,19 @@ pub fn sign_in_user(
                 &EncodingKey::from_secret("secret".as_ref()),
             )
             .map_err(|_| Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))?;
+            
+            // For localhost cross-origin, use SameSite=lax or None with proper settings
             let cookie = format!(
-                "jwt={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+                "jwt={}; HttpOnly; SameSite=lax; Path=/; Max-Age={}",
                 token,
                 60 * 60 * 24 * 7
             );
-            let resp = Response::builder()
+            
+            let mut resp = Response::builder()
                 .status(StatusCode::OK)
-                .header("Set-Cookie", cookie)
-                .body(format!("jwt:{}", token));
+                .header(header::SET_COOKIE, cookie)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(format!("{{\"jwt\":\"{}\"}}", token));
 
             Ok(resp)
         }
