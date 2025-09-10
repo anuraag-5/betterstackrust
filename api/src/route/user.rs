@@ -78,6 +78,6 @@ pub fn sign_in_user(
 
             Ok(resp)
         }
-        Err(_) => Err(Error::from_status(StatusCode::UNAUTHORIZED)),
+        Err(_) => Err(Error::from_status(StatusCode::NOT_FOUND)),
     }
 }
