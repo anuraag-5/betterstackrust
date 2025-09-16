@@ -9,7 +9,7 @@ use poem::{
 };
 use store::{models::app::PageVisit, store::Store};
 
-use crate::{request_input::TrackingInput, request_output::TotalViewsOutput};
+use crate::{auth_middleware::UserId, request_input::TrackingInput, request_output::{TotalViewsOutput, User}};
 
 #[handler]
 pub fn snippet() -> Response {
@@ -125,4 +125,18 @@ pub fn total_views(
             success: false,
         }),
     }
+}
+
+#[handler]
+pub fn check_user(Data(s): Data<&Arc<Mutex<Store>>>, UserId( user_id): UserId) -> Json<User> {
+  let mut locked_s = s.lock().unwrap();
+  let user = locked_s.check_user(user_id);
+
+  match user {
+      Some(u) => {
+        Json(User { user_id: u, success: true })
+      },
+      None => Json(User { user_id: "".to_owned() , success: false })
+  }
+  
 }

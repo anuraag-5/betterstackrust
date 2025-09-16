@@ -1,4 +1,4 @@
-use crate::{schema::page_visits, store::Store};
+use crate::{schema::{page_visits, website::user_id}, store::Store};
 use diesel::{dsl::count, prelude::*, result::Error};
 
 #[derive(Queryable, Insertable, Selectable)]
@@ -13,6 +13,23 @@ pub struct PageVisit {
 }
 
 impl Store {
+
+    pub fn check_user(&mut self, input_user_id: String) -> Option<String> {
+        use crate::schema::users::dsl::*;
+
+        let user = users.filter(id.eq(input_user_id)).select(id).get_result::<String>(&mut self.conn);
+
+        match user {
+            Ok(user) => {
+                Some(user)
+            },
+            Err(_) => {
+                println!("User not found");
+                None
+            }
+        }
+    }
+
     pub fn store_tracks(&mut self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
         let created_page_visit = diesel::insert_into(page_visits::table)
             .values(page_visit_data)

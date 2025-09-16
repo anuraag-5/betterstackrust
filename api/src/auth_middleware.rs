@@ -23,7 +23,7 @@ impl<'a> FromRequest<'a> for UserId {
                     println!("{}", e.to_string());
                     Error::from_string(
                         "Error during decoding jwt",
-                        StatusCode::INTERNAL_SERVER_ERROR,
+                        StatusCode::UNAUTHORIZED,
                     )
                 })?;
 

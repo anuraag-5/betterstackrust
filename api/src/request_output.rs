@@ -29,3 +29,9 @@ pub struct TotalViewsOutput {
     pub total_views: i64,
     pub success: bool
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct User {
+    pub user_id: String,
+    pub success: bool
+}
