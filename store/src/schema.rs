@@ -22,6 +22,7 @@ diesel::table! {
 diesel::table! {
     users (id) {
         id -> Text,
+        name -> Text,
         email -> Text,
         password -> Text,
     }
