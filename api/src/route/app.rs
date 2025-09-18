@@ -9,7 +9,11 @@ use poem::{
 };
 use store::{models::app::PageVisit, store::Store};
 
-use crate::{auth_middleware::UserId, request_input::TrackingInput, request_output::{TotalViewsOutput, User}};
+use crate::{
+    auth_middleware::UserIdFromHeader,
+    request_input::TrackingInput,
+    request_output::{TotalViewsOutput, User},
+};
 
 #[handler]
 pub fn snippet() -> Response {
@@ -128,15 +132,25 @@ pub fn total_views(
 }
 
 #[handler]
-pub fn check_user(Data(s): Data<&Arc<Mutex<Store>>>, UserId( user_id): UserId) -> Json<User> {
-  let mut locked_s = s.lock().unwrap();
-  let user = locked_s.check_user(user_id);
+pub fn get_user(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    UserIdFromHeader(user_id): UserIdFromHeader,
+) -> Json<User> {
+    let mut locked_s = s.lock().unwrap();
+    let res = locked_s.get_user(user_id);
 
-  match user {
-      Some(u) => {
-        Json(User { user_id: u, success: true })
-      },
-      None => Json(User { user_id: "".to_owned() , success: false })
-  }
-  
+    match res {
+        Some(user) => Json(User {
+            id: user.id.clone(),
+            name: user.name.clone(),
+            email: user.email.clone(),
+            success: true,
+        }),
+        None => Json(User {
+            id: "".to_owned(),
+            name: "".to_owned(),
+            email: "".to_owned(),
+            success: false,
+        }),
+    }
 }

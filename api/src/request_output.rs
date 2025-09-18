@@ -32,6 +32,8 @@ pub struct TotalViewsOutput {
 
 #[derive(Deserialize, Serialize)]
 pub struct User {
-    pub user_id: String,
+    pub id: String,
+    pub name: String,
+    pub email: String,
     pub success: bool
 }

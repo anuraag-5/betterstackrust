@@ -9,7 +9,14 @@ pub struct CreateWebsiteInput {
 #[derive(Deserialize, Serialize)]
 pub struct CreateUserInput {
     pub username: String,
-    pub password: String
+    pub password: String,
+    pub name: String
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SignInUserInput {
+    pub username: String,
+    pub password: String,
 }
 
 #[derive(Deserialize, Serialize)]

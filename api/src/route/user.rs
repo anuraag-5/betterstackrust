@@ -1,8 +1,8 @@
 use std::sync::{Arc, Mutex};
 
 use crate::{
-    request_input::CreateUserInput,
-    request_output::{CreateUserOutput},
+    request_input::{CreateUserInput, SignInUserInput},
+    request_output::CreateUserOutput,
 };
 use jsonwebtoken::{encode, EncodingKey, Header};
 use poem::{
@@ -27,10 +27,11 @@ pub fn create_user(
 ) -> Result<Json<CreateUserOutput>, Error> {
     let username = data.username;
     let user_password = data.password;
+    let name = data.name;
 
     let mut locked_s = s.lock().unwrap();
     let result = locked_s
-        .sign_up(username, user_password)
+        .sign_up(username, user_password, name)
         .map_err(|_| Error::from_status(StatusCode::CONFLICT))?;
 
     Ok(Json(CreateUserOutput {
@@ -41,7 +42,7 @@ pub fn create_user(
 
 #[handler]
 pub fn sign_in_user(
-    Json(data): Json<CreateUserInput>,
+    Json(data): Json<SignInUserInput>,
     Data(s): Data<&Arc<Mutex<Store>>>,
 ) -> Result<Response, Error> {
     let username = data.username;
@@ -51,9 +52,9 @@ pub fn sign_in_user(
     let result = locked_s.sign_in(username, user_password);
 
     match result {
-        Ok(id) => {
+        Ok(user) => {
             let my_claims = Claims {
-                sub: id,
+                sub: user.id,
                 exp: 1111111111111,
             };
             let token = encode(
@@ -65,7 +66,7 @@ pub fn sign_in_user(
             
             // For localhost cross-origin, use SameSite=lax or None with proper settings
             let cookie = format!(
-                "jwt={}; HttpOnly; SameSite=lax; Path=/; Max-Age={}",
+                "jwt={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={};",
                 token,
                 60 * 60 * 24 * 7
             );
@@ -80,4 +81,15 @@ pub fn sign_in_user(
         }
         Err(_) => Err(Error::from_status(StatusCode::NOT_FOUND)),
     }
+}
+
+#[handler]
+pub fn logout_user() ->  Response {
+    Response::builder()
+    .status(StatusCode::OK)
+    .header(
+        header::SET_COOKIE,
+        "jwt=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+    )
+    .body("Logged out")
 }
