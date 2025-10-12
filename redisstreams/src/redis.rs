@@ -4,7 +4,8 @@ use redis::{streams::StreamReadOptions, Connection, RedisError, TypedCommands};
 pub struct WebsiteEvent {
     pub url: String,
     pub id: String,
-    pub users_id: String
+    pub users_id: String,
+    pub is_snipp_added: bool
 }
 pub struct Redis {
     pub conn: Connection,
@@ -30,11 +31,9 @@ impl Redis {
     pub fn x_add_bulk(&mut self, websites: Vec<WebsiteEvent>) -> () {
 
         for website in websites {
-            self.x_add(WebsiteEvent {
-                url: website.url.clone(),
-                id: website.id.clone(),
-                users_id: website.users_id.clone()
-            });
+            if website.is_snipp_added {
+                self.x_add(website);
+            }
         }
     }
 

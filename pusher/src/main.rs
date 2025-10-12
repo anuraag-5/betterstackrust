@@ -15,13 +15,13 @@ async fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
         let websites = s.get_all_websites()?;
 
         let website_events: Vec<WebsiteEvent> = websites.into_iter().map(|w| {
-            let (url, id, users_id) = w;
-            WebsiteEvent { url, id, users_id }
+            let (url, id, users_id, is_snipp_added) = w;
+            WebsiteEvent { url, id, users_id, is_snipp_added }
         }).collect();
 
         r.x_add_bulk(website_events);
 
-        sleep(Duration::from_secs(3)).await;
+        sleep(Duration::from_secs(10)).await;
     }
 }
 

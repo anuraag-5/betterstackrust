@@ -74,3 +74,9 @@ CREATE TABLE page_visits (
     user_agent TEXT NOT NULL,
     visited_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE "website" 
+ADD COLUMN  "is_snippet_added" BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE "website"
+ALTER COLUMN "is_snippet_added" SET NOT NULL;

@@ -1,9 +1,10 @@
 use crate::{store::Store};
 use chrono::{NaiveDateTime, Utc};
 use diesel::{prelude::*, result::Error};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Queryable, Insertable, Selectable)]
+#[derive(Queryable, Insertable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::website)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Website {
@@ -11,6 +12,7 @@ pub struct Website {
     pub url: String,
     pub user_id: String,
     pub time_added: NaiveDateTime,
+    pub is_snippet_added: bool
 }
 
 #[derive(Queryable, Insertable, Selectable)]
@@ -31,6 +33,7 @@ impl Store {
             url: new_url,
             time_added: Utc::now().naive_local(),
             user_id: u_i,
+            is_snippet_added: false
         };
 
         let created_website = diesel::insert_into(crate::schema::website::table)
@@ -74,14 +77,21 @@ impl Store {
         Ok(found_website)
     }
 
-    pub fn get_all_websites(&mut self) -> Result<Vec<(String, String, String)>, diesel::result::Error> {
+    pub fn get_all_websites(&mut self) -> Result<Vec<(String, String, String, bool)>, diesel::result::Error> {
         use crate::schema::website::dsl::*;
     
         let websites = website
-            .select((url, id, user_id))
-            .load::<(String, String, String)>(&mut self.conn)?;
+            .select((url, id, user_id, is_snippet_added))
+            .load::<(String, String, String, bool)>(&mut self.conn)?;
     
         Ok(websites)
     }
 
+    pub fn get_users_all_websites(&mut self, input_user_id: String) -> Result<Vec<Website>, Error> {
+        use crate::schema::website::dsl::*;
+
+        let websites = website.filter(user_id.eq(input_user_id)).select(Website::as_select()).load(&mut self.conn)?;
+
+        Ok(websites)
+    }
 }

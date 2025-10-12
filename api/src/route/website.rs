@@ -1,21 +1,21 @@
 use std::sync::{Arc, Mutex};
 
 use crate::{
-    auth_middleware::UserId,
-    request_input::CreateWebsiteInput,
+    auth_middleware::UserIdFromHeader,
+    request_input::{CreateWebsiteInput, UsersWebsites},
     request_output::{ CreateWebsiteOutput, GetWebsiteOutput },
 };
 use poem::{
     handler,
     web::{Data, Json, Path},
 };
-use store::store::Store;
+use store::{store::Store};
 
 #[handler]
 pub fn create_website(
     Json(data): Json<CreateWebsiteInput>,
     Data(s): Data<&Arc<Mutex<Store>>>,
-    UserId(user_id): UserId,
+    UserIdFromHeader(user_id): UserIdFromHeader,
 ) -> Json<CreateWebsiteOutput> {
     if user_id.len() <= 0 {
         return Json(CreateWebsiteOutput {
@@ -43,7 +43,7 @@ pub fn create_website(
 pub fn get_status(
     Path(website_id): Path<String>,
     Data(s): Data<&Arc<Mutex<Store>>>,
-    UserId(user_id): UserId,
+    UserIdFromHeader(user_id): UserIdFromHeader,
 ) -> Json<GetWebsiteOutput> {
     let mut locked_s = s.lock().unwrap();
     let website_result = locked_s.get_website(website_id, user_id);
@@ -56,5 +56,25 @@ pub fn get_status(
             url: e.to_string(),
             success: true,
         }),
+    }
+}
+
+#[handler]
+pub fn get_users_websites(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    UserIdFromHeader(user_id): UserIdFromHeader
+) -> Json<UsersWebsites> {
+    let mut locked_s = s.lock().unwrap();
+    let res = locked_s.get_users_all_websites(user_id);
+
+    match res {
+        Ok(websites) => {
+            let users_websites = UsersWebsites { websites: Some(websites), success: true };
+            Json(users_websites)
+        }
+        Err(_) => {
+            let users_websites = UsersWebsites { websites: None, success: false };
+            Json(users_websites)
+        }
     }
 }

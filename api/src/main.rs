@@ -7,6 +7,7 @@ use std::{io::Error, sync::{Arc, Mutex}};
 use store::store::Store;
 use crate::route::app::{get_user, total_views};
 use crate::route::user::logout_user;
+use crate::route::website::get_users_websites;
 use crate::route::{
     app::{snippet, track}, user::{create_user, sign_in_user}, website::{create_website, get_status}
 };
@@ -37,6 +38,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/totalviews/:w_id", get(total_views))
         .at("/api/get_user", get(get_user))
         .at("/api/user/logout", post(logout_user))
+        .at("/api/user/get_all_websites", get(get_users_websites))
         .data(s)
         .with(cors)
         .with(CookieJarManager::new());

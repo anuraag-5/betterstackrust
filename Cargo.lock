@@ -197,6 +197,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -1842,6 +1843,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "diesel",
+ "serde",
  "uuid",
 ]
 

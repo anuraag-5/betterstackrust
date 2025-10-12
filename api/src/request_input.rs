@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
+use store::models::website::Website;
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateWebsiteInput {
     pub url: String,
 }
-
 
 #[derive(Deserialize, Serialize)]
 pub struct CreateUserInput {
@@ -26,4 +26,10 @@ pub struct TrackingInput {
     pub referrer: String,
     pub user_agent: String,
     pub time_stamp: String
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct UsersWebsites {
+    pub websites: Option<Vec<Website>>,
+    pub success: bool
 }
