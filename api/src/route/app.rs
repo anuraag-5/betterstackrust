@@ -137,6 +137,10 @@ pub fn get_user(
     UserIdFromHeader(user_id): UserIdFromHeader,
 ) -> Json<User> {
     let mut locked_s = s.lock().unwrap();
+    if user_id.len() <= 0 {
+        print!("User id not found");
+        return Json( User { id: "()".to_owned(), name: "()".to_owned(), email: "()".to_owned(), success: false })
+    }
     let res = locked_s.get_user(user_id);
 
     match res {

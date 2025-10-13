@@ -80,3 +80,7 @@ ADD COLUMN  "is_snippet_added" BOOLEAN DEFAULT FALSE;
 
 ALTER TABLE "website"
 ALTER COLUMN "is_snippet_added" SET NOT NULL;
+
+ALTER TABLE "website" RENAME TO "websites";
+ALTER TABLE "websites" 
+ADD COLUMN  "about" TEXT NOT NULL;

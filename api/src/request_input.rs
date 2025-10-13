@@ -4,6 +4,7 @@ use store::models::website::Website;
 #[derive(Serialize, Deserialize)]
 pub struct CreateWebsiteInput {
     pub url: String,
+    pub about: String
 }
 
 #[derive(Deserialize, Serialize)]

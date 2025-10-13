@@ -29,16 +29,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    website (id) {
-        id -> Text,
-        url -> Text,
-        time_added -> Timestamp,
-        user_id -> Text,
-        is_snippet_added -> Bool,
-    }
-}
-
-diesel::table! {
     website_tick (id) {
         id -> Text,
         response_time_ms -> Int4,
@@ -49,15 +39,26 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(page_visits -> website (website_id));
-diesel::joinable!(website -> users (user_id));
+diesel::table! {
+    websites (id) {
+        id -> Text,
+        url -> Text,
+        time_added -> Timestamp,
+        user_id -> Text,
+        is_snippet_added -> Bool,
+        about -> Text,
+    }
+}
+
+diesel::joinable!(page_visits -> websites (website_id));
 diesel::joinable!(website_tick -> region (region_id));
-diesel::joinable!(website_tick -> website (website_id));
+diesel::joinable!(website_tick -> websites (website_id));
+diesel::joinable!(websites -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     page_visits,
     region,
     users,
-    website,
     website_tick,
+    websites,
 );

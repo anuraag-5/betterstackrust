@@ -25,8 +25,9 @@ pub fn create_website(
     }
     
     let url = data.url;
+    let about = data.about;
     let mut locked_s = s.lock().unwrap();
-    let created_website = locked_s.create_website(user_id, url);
+    let created_website = locked_s.create_website(user_id, url, about);
     match created_website {
         Ok(w) => Json(CreateWebsiteOutput {
             website_id: w.id,
