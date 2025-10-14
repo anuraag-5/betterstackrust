@@ -97,7 +97,7 @@ pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>)
                         referrer,
                         user_agent,
                         page_url: current_path.to_string(),
-                        website_id: w.id,
+                        website: w.url,
                     };
 
                     let _inserted_data = locked_s.store_tracks(page_visit);

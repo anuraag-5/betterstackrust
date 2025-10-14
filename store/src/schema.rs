@@ -3,7 +3,7 @@
 diesel::table! {
     page_visits (id) {
         id -> Int8,
-        website_id -> Text,
+        website -> Text,
         visitor_id -> Text,
         page_url -> Text,
         referrer -> Text,
@@ -34,7 +34,7 @@ diesel::table! {
         response_time_ms -> Int4,
         status -> Text,
         region_id -> Text,
-        website_id -> Text,
+        website_url -> Text,
         createdAt -> Timestamp,
     }
 }
@@ -50,9 +50,7 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(page_visits -> websites (website_id));
 diesel::joinable!(website_tick -> region (region_id));
-diesel::joinable!(website_tick -> websites (website_id));
 diesel::joinable!(websites -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

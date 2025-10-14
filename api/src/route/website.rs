@@ -2,30 +2,23 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     auth_middleware::UserIdFromHeader,
-    request_input::{CreateWebsiteInput, UsersWebsites},
-    request_output::{ CreateWebsiteOutput, GetWebsiteOutput },
+    request_input::{ CreateWebsiteInput, UsersWebsites, GetWebsiteDetailsInput },
+    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsHourlyOutput },
 };
 use poem::{
     handler,
-    web::{Data, Json, Path},
+    web::{Data, Json},
 };
 use store::{store::Store};
 
 #[handler]
 pub fn create_website(
     Json(data): Json<CreateWebsiteInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
-    UserIdFromHeader(user_id): UserIdFromHeader,
+    Data(s): Data<&Arc<Mutex<Store>>>
 ) -> Json<CreateWebsiteOutput> {
-    if user_id.len() <= 0 {
-        return Json(CreateWebsiteOutput {
-            website_id: "Not Authenticated".to_string(),
-            success: false,
-        });
-    }
-    
     let url = data.url;
     let about = data.about;
+    let user_id= data.user_id;
     let mut locked_s = s.lock().unwrap();
     let created_website = locked_s.create_website(user_id, url, about);
     match created_website {
@@ -41,21 +34,20 @@ pub fn create_website(
 }
 
 #[handler]
-pub fn get_status(
-    Path(website_id): Path<String>,
+pub fn get_details_hourly(
     Data(s): Data<&Arc<Mutex<Store>>>,
-    UserIdFromHeader(user_id): UserIdFromHeader,
-) -> Json<GetWebsiteOutput> {
+    Json(data): Json<GetWebsiteDetailsInput>
+) -> Json<GetWebsiteDetailsHourlyOutput> {
     let mut locked_s = s.lock().unwrap();
-    let website_result = locked_s.get_website(website_id, user_id);
+    let website_result = locked_s.get_website_details(data.website, data.user_id);
     match website_result {
-        Ok(w) => Json(GetWebsiteOutput {
-            url: w.url,
+        Ok(w) => Json(GetWebsiteDetailsHourlyOutput {
+            data: Some(w),
             success: true,
         }),
-        Err(e) => Json(GetWebsiteOutput {
-            url: e.to_string(),
-            success: true,
+        Err(_) => Json(GetWebsiteDetailsHourlyOutput {
+            data: None,
+            success: false,
         }),
     }
 }

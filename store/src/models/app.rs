@@ -9,7 +9,7 @@ pub struct PageVisit {
     pub page_url: String,
     pub referrer: String,
     pub user_agent: String,
-    pub website_id: String,
+    pub website: String,
 }
 
 impl Store {
@@ -39,10 +39,10 @@ impl Store {
         Ok(created_page_visit)
     }
 
-    pub fn get_total_views(&mut self, input_website_id: String) -> Result<i64, Error>{
+    pub fn get_total_views(&mut self, input_website_url: String) -> Result<i64, Error>{
         use crate::schema::page_visits::dsl::*;
 
-        let total_visitors = page_visits.filter(website_id.eq(input_website_id)).select(count(id)).get_result::<i64>(&mut self.conn)?;
+        let total_visitors = page_visits.filter(website.eq(input_website_url)).select(count(website)).get_result::<i64>(&mut self.conn)?;
 
         Ok(total_visitors)
     }

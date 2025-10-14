@@ -24,7 +24,16 @@ pub struct WebsiteTick {
     pub response_time_ms: i32,
     pub status: String,
     pub region_id: String,
-    pub website_id: String,
+    pub website_url: String,
+}
+
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct HourlyView {
+    #[diesel(sql_type = diesel::sql_types::Timestamp)]
+    pub hour: chrono::NaiveDateTime,
+
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub views: i64,
 }
 
 impl Store {
@@ -49,23 +58,37 @@ impl Store {
         }
     }
 
-    pub fn get_website(
+    pub fn get_website_details(
         &mut self,
-        input_website_id: String,
+        input_website_url: String,
         input_user_id: String,
-    ) -> Result<Website, Error> {
+    ) -> Result<Vec<HourlyView>, Error> {
         use crate::schema::websites::dsl::*;
 
-        let website_result = websites
-            .filter(id.eq(input_website_id))
+        let _website_result = websites
+            .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn);
+            .first(&mut self.conn)?;
 
-        match website_result {
-            Ok(w) => Ok(w),
-            Err(e) => Err(e),
-        }
+        let query = r#"
+        SELECT 
+            DATE_TRUNC('hour', visited_at) AS hour,
+            COUNT(*) AS views
+        FROM page_visits
+        WHERE 
+            website = $1
+            AND visited_at >= NOW() - INTERVAL '24 hours'
+        GROUP BY hour
+        ORDER BY hour;
+        "#;
+
+        let results = diesel::sql_query(query)
+        .bind::<diesel::sql_types::Text, _>(input_website_url)
+        .load::<HourlyView>(&mut self.conn)?;
+
+        Ok(results)
+
     }
 
     pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {

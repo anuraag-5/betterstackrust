@@ -24,7 +24,7 @@ CREATE TABLE "website_tick" (
     "response_time_ms" INTEGER NOT NULL,
     "status" TEXT NOT NULL,
     "region_id" TEXT NOT NULL,
-    "website_id" TEXT NOT NULL,
+    "website_url" TEXT NOT NULL,
 
     CONSTRAINT "WebsiteTick_pkey" PRIMARY KEY ("id")
 );
@@ -33,7 +33,7 @@ CREATE TABLE "website_tick" (
 ALTER TABLE "website_tick" ADD CONSTRAINT "website_tick_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "region"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "website_tick" ADD CONSTRAINT "website_tick_website_id_fkey" FOREIGN KEY ("website_id") REFERENCES "website"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "website_tick" ADD CONSTRAINT "website_tick_website_url_fkey" FOREIGN KEY ("website_url") REFERENCES "website"("url") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 ALTER TABLE "website" ADD COLUMN     "user_id" TEXT NOT NULL;
 
@@ -67,7 +67,7 @@ ADD CONSTRAINT "U_email" UNIQUE ("email");
 
 CREATE TABLE page_visits (
     id BIGSERIAL PRIMARY KEY,
-    website_id TEXT REFERENCES website(id) ON DELETE CASCADE NOT NULL,
+    website TEXT REFERENCES website(url) ON DELETE CASCADE NOT NULL,
     visitor_id TEXT NOT NULL,
     page_url TEXT NOT NULL,
     referrer TEXT NOT NULL,

@@ -4,7 +4,8 @@ use store::models::website::Website;
 #[derive(Serialize, Deserialize)]
 pub struct CreateWebsiteInput {
     pub url: String,
-    pub about: String
+    pub about: String,
+    pub user_id: String
 }
 
 #[derive(Deserialize, Serialize)]
@@ -33,4 +34,10 @@ pub struct TrackingInput {
 pub struct UsersWebsites {
     pub websites: Option<Vec<Website>>,
     pub success: bool
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetWebsiteDetailsInput {
+    pub user_id: String,
+    pub website: String
 }

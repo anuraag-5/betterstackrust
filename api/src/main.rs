@@ -2,35 +2,40 @@ use dotenvy::dotenv;
 use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
-use poem::middleware::{Cors, CookieJarManager};
-use std::{io::Error, sync::{Arc, Mutex}};
-use store::store::Store;
 use crate::route::app::{get_user, total_views};
 use crate::route::user::logout_user;
-use crate::route::website::get_users_websites;
+use crate::route::website::{get_details_hourly, get_users_websites, create_website};
 use crate::route::{
-    app::{snippet, track}, user::{create_user, sign_in_user}, website::{create_website, get_status}
+    app::{snippet, track},
+    user::{create_user, sign_in_user}
 };
+use poem::middleware::{CookieJarManager, Cors};
+use std::{
+    io::Error,
+    sync::{Arc, Mutex},
+};
+use store::store::Store;
 
+pub mod auth_middleware;
 pub mod request_input;
 pub mod request_output;
 pub mod route;
-pub mod auth_middleware;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-
     dotenv().ok();
 
-    let s = Arc::new(Mutex::new(Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?));
+    let s = Arc::new(Mutex::new(
+        Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?,
+    ));
 
     let cors = Cors::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_credentials(true);
 
     let app = Route::new()
-        .at("/api/website/:website_id", get(get_status))
         .at("/api/website", post(create_website))
+        .at("/api/website/hourly", post(get_details_hourly))
         .at("/api/user/signup", post(create_user))
         .at("/api/user/signin", post(sign_in_user))
         .at("/api/snippet", get(snippet))
