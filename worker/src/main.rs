@@ -78,7 +78,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn fetch_website(s: &mut Store, url: String, website_id: String) {
+async fn fetch_website(s: &mut Store, url: String, website_url: String) {
     let start_time = Instant::now();
 
     let res = reqwest::get(format!("https://{}", url)).await;
@@ -93,7 +93,7 @@ async fn fetch_website(s: &mut Store, url: String, website_id: String) {
                     response_time_ms: total_time,
                     status: "Up".to_owned(),
                     region_id: "1".to_owned(),
-                    website_id,
+                    website_url,
                 };
 
                 let _ = diesel::insert_into(website_tick::table)
@@ -106,7 +106,7 @@ async fn fetch_website(s: &mut Store, url: String, website_id: String) {
                     response_time_ms: total_time,
                     status: "Down".to_owned(),
                     region_id: "1".to_owned(),
-                    website_id,
+                    website_url,
                 };
 
                 let _ = diesel::insert_into(website_tick::table)
@@ -122,7 +122,7 @@ async fn fetch_website(s: &mut Store, url: String, website_id: String) {
                 response_time_ms: total_time,
                 status: "Unknown".to_owned(),
                 region_id: "1".to_owned(),
-                website_id,
+                website_url,
             };
 
             let _ = diesel::insert_into(website_tick::table)
