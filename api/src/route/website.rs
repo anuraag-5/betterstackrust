@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use crate::{
     auth_middleware::UserIdFromHeader,
     request_input::{ CreateWebsiteInput, UsersWebsites, GetWebsiteDetailsInput },
-    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsHourlyOutput },
+    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsDailyOutput },
 };
 use poem::{
     handler,
@@ -39,7 +39,7 @@ pub fn get_details_hourly(
     Json(data): Json<GetWebsiteDetailsInput>
 ) -> Json<GetWebsiteDetailsHourlyOutput> {
     let mut locked_s = s.lock().unwrap();
-    let website_result = locked_s.get_website_details(data.website, data.user_id);
+    let website_result = locked_s.get_website_details_hourly(data.website, data.user_id);
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsHourlyOutput {
             data: Some(w),
@@ -52,6 +52,24 @@ pub fn get_details_hourly(
     }
 }
 
+#[handler]
+pub fn get_details_daily(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetWebsiteDetailsInput>
+) -> Json<GetWebsiteDetailsDailyOutput> {
+    let mut locked_s = s.lock().unwrap();
+    let website_result = locked_s.get_website_details_daily(data.website, data.user_id);
+    match website_result {
+        Ok(w) => Json(GetWebsiteDetailsDailyOutput {
+            data: Some(w),
+            success: true,
+        }),
+        Err(_) => Json(GetWebsiteDetailsDailyOutput {
+            data: None,
+            success: false,
+        }),
+    }
+}
 #[handler]
 pub fn get_users_websites(
     Data(s): Data<&Arc<Mutex<Store>>>,
