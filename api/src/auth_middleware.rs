@@ -1,3 +1,5 @@
+use std::env;
+
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use poem::{http::StatusCode, Error, FromRequest, Request, RequestBody, Result};
 
@@ -16,7 +18,7 @@ impl<'a> FromRequest<'a> for UserId {
                 let value = token.value_str();
                 let claims = decode::<Claims>(
                     &value,
-                    &DecodingKey::from_secret("secret".as_ref()),
+                    &DecodingKey::from_secret(env::var("JWT_SECRET").map_err(|_| Error::from_string("Invalid Secret", StatusCode::UNAUTHORIZED))?.as_ref()),
                     &Validation::default(),
                 )
                 .map_err(|e| {
@@ -50,7 +52,7 @@ impl<'a> FromRequest<'a> for UserIdFromHeader {
                 let value = jwt.to_string();
                 let claims = decode::<Claims>(
                     &value,
-                    &DecodingKey::from_secret("secret".as_ref()),
+                    &DecodingKey::from_secret(env::var("JWT_SECRET").map_err(|_| Error::from_string("Invalid Secret", StatusCode::UNAUTHORIZED))?.as_ref()),
                     &Validation::default(),
                 )
                 .map_err(|_| {
@@ -58,7 +60,7 @@ impl<'a> FromRequest<'a> for UserIdFromHeader {
                 })?;
                 Ok(UserIdFromHeader(claims.claims.sub))
             }
-            None => Ok(UserIdFromHeader("".to_owned())),
+            None => Ok(UserIdFromHeader("".to_string())),
         }
     }
 }

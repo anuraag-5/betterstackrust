@@ -6,7 +6,7 @@ use diesel::{dsl::count, prelude::*, result::Error};
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct PageVisit {
     pub visitor_id: String,
-    pub page_url: String,
+    pub page_path: String,
     pub referrer: String,
     pub user_agent: String,
     pub website: String,
@@ -21,7 +21,7 @@ impl Store {
 
         match user {
             Ok(user) => {
-                Some(UserOutput { id: user.id.clone(), email: user.email.clone(), name: user.name.clone() })
+                Some(UserOutput { id: user.id, email: user.email, name: user.name, plan_type: user.plan_name })
             },
             Err(_) => {
                 println!("User not found");
@@ -39,11 +39,11 @@ impl Store {
         Ok(created_page_visit)
     }
 
-    pub fn get_total_views(&mut self, input_website_url: String) -> Result<i64, Error>{
-        use crate::schema::page_visits::dsl::*;
+    // pub fn get_total_views(&mut self, input_website_url: String) -> Result<i64, Error>{
+    //     use crate::schema::page_visits::dsl::*;
 
-        let total_visitors = page_visits.filter(website.eq(input_website_url)).select(count(website)).get_result::<i64>(&mut self.conn)?;
+    //     let total_visitors = page_visits.filter(website.eq(input_website_url)).select(count(website)).get_result::<i64>(&mut self.conn)?;
 
-        Ok(total_visitors)
-    }
+    //     Ok(total_visitors)
+    // }
 }

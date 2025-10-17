@@ -37,7 +37,15 @@ pub struct UsersWebsites {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct GetWebsiteDetailsInput {
+pub struct GetWebsiteDetailsDailyInput {
     pub user_id: String,
-    pub website: String
+    pub website: String,
+    pub day:  String
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetWebsiteDetailsHourlyInput {
+    pub user_id: String,
+    pub website: String,
+    pub hour:  String
 }

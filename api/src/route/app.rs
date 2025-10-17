@@ -96,7 +96,7 @@ pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>)
                         visitor_id,
                         referrer,
                         user_agent,
-                        page_url: current_path.to_string(),
+                        page_path: current_path.to_string(),
                         website: w.url,
                     };
 
@@ -111,25 +111,24 @@ pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>)
     }
 }
 
-#[handler]
-pub fn total_views(
-    Path(w_id): Path<String>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
-) -> Json<TotalViewsOutput> {
-    let mut locked_s = s.lock().unwrap();
-    let res = locked_s.get_total_views(w_id);
+// #[handler]
+// pub fn total_views(
+//     Data(s): Data<&Arc<Mutex<Store>>>,
+// ) -> Json<TotalViewsOutput> {
+//     let mut locked_s = s.lock().unwrap();
+//     let res = locked_s.get_total_views(w_id);
 
-    match res {
-        Ok(count) => Json(TotalViewsOutput {
-            total_views: count,
-            success: true,
-        }),
-        Err(_) => Json(TotalViewsOutput {
-            total_views: 0,
-            success: false,
-        }),
-    }
-}
+//     match res {
+//         Ok(count) => Json(TotalViewsOutput {
+//             total_views: count,
+//             success: true,
+//         }),
+//         Err(_) => Json(TotalViewsOutput {
+//             total_views: 0,
+//             success: false,
+//         }),
+//     }
+// }
 
 #[handler]
 pub fn get_user(
@@ -139,7 +138,7 @@ pub fn get_user(
     let mut locked_s = s.lock().unwrap();
     if user_id.len() <= 0 {
         print!("User id not found");
-        return Json( User { id: "()".to_owned(), name: "()".to_owned(), email: "()".to_owned(), success: false })
+        return Json( User { id: "()".to_string(), name: "()".to_string(), email: "()".to_string(), plan_type: "".to_string(), success: false })
     }
     let res = locked_s.get_user(user_id);
 
@@ -148,12 +147,14 @@ pub fn get_user(
             id: user.id.clone(),
             name: user.name.clone(),
             email: user.email.clone(),
+            plan_type: user.plan_type.clone(),
             success: true,
         }),
         None => Json(User {
-            id: "".to_owned(),
-            name: "".to_owned(),
-            email: "".to_owned(),
+            id: "".to_string(),
+            name: "".to_string(),
+            email: "".to_string(),
+            plan_type: "".to_string(),
             success: false,
         }),
     }

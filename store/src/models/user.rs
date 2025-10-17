@@ -10,12 +10,14 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub name: String,
+    pub plan_name: String
 }
 
 pub struct UserOutput {
     pub id: String,
     pub email: String,
     pub name: String,
+    pub plan_type: String
 }
 
 impl Store {
@@ -30,6 +32,7 @@ impl Store {
             email: username,
             password: user_password,
             name: user_name,
+            plan_name: "Basic".to_string()
         };
 
         let result = diesel::insert_into(crate::schema::users::table)
@@ -66,6 +69,7 @@ impl Store {
                         id: u[0].id.clone(),
                         email: u[0].email.clone(),
                         name: u[0].name.clone(),
+                        plan_type: u[0].plan_name.clone()
                     })
                 } else {
                     Err(diesel::result::Error::NotFound)

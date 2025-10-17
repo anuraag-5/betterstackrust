@@ -2,7 +2,7 @@ use dotenvy::dotenv;
 use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
-use crate::route::app::{get_user, total_views};
+use crate::route::app::{get_user};
 use crate::route::user::logout_user;
 use crate::route::website::{get_details_hourly, get_details_daily, get_users_websites, create_website};
 use crate::route::{
@@ -41,7 +41,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/user/signin", post(sign_in_user))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
-        .at("/api/totalviews/:w_id", get(total_views))
+        // .at("/api/total_views", get(total_views))
         .at("/api/get_user", get(get_user))
         .at("/api/user/logout", post(logout_user))
         .at("/api/user/get_all_websites", get(get_users_websites))

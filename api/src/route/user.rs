@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{env, sync::{Arc, Mutex}};
 
 use crate::{
     request_input::{CreateUserInput, SignInUserInput},
@@ -60,7 +60,7 @@ pub fn sign_in_user(
             let token = encode(
                 &Header::default(),
                 &my_claims,
-                &EncodingKey::from_secret("secret".as_ref()),
+                &EncodingKey::from_secret(env::var("JWT_SECRET").map_err(|_| Error::from_string("Invalid ENV Secret", StatusCode::EXPECTATION_FAILED))?.as_ref()),
             )
             .map_err(|_| Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))?;
             

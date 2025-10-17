@@ -14,6 +14,7 @@ pub struct Website {
     pub time_added: NaiveDateTime,
     pub is_snippet_added: bool,
     pub about: String,
+    pub plan_name: String,
 }
 
 #[derive(Queryable, Insertable, Selectable)]
@@ -59,6 +60,7 @@ impl Store {
             user_id: u_i,
             is_snippet_added: false,
             about: input_about,
+            plan_name: "basic".to_owned(),
         };
 
         let created_website = diesel::insert_into(crate::schema::websites::table)
@@ -76,8 +78,13 @@ impl Store {
         &mut self,
         input_website_url: String,
         input_user_id: String,
+        mut hours: String,
     ) -> Result<Vec<HourlyView>, Error> {
         use crate::schema::websites::dsl::*;
+
+        if hours.trim().is_empty() {
+            hours = "2 hours".to_string();
+        }
 
         let _website_result = websites
             .filter(url.eq(&input_website_url))
@@ -92,13 +99,14 @@ impl Store {
         FROM page_visits
         WHERE 
             website = $1
-            AND visited_at >= NOW() - INTERVAL '24 hours'
+            AND visited_at >= NOW() - ($2::text)::interval
         GROUP BY hour
         ORDER BY hour;
         "#;
 
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
+            .bind::<diesel::sql_types::Text, _>(hours)
             .load::<HourlyView>(&mut self.conn)?;
 
         Ok(results)
@@ -108,8 +116,13 @@ impl Store {
         &mut self,
         input_website_url: String,
         input_user_id: String,
+        mut days: String,
     ) -> Result<Vec<DailyView>, Error> {
         use crate::schema::websites::dsl::*;
+
+        if days.trim().is_empty() {
+            days = "2 day".to_string();
+        }
 
         let _website_result = websites
             .filter(url.eq(&input_website_url))
@@ -118,29 +131,30 @@ impl Store {
             .first(&mut self.conn)?;
 
         let query = r#"
-        SELECT 
-        d.day,
-        COALESCE(COUNT(pv.id), 0) AS views
-        FROM 
-            generate_series(
-            NOW() - INTERVAL '30 days', 
-            NOW(), 
-        INTERVAL '1 day'
-            ) AS d(day)
-        LEFT JOIN page_visits pv 
-            ON DATE_TRUNC('day', pv.visited_at) = DATE_TRUNC('day', d.day)
-            AND pv.website = 'cal.com'
-        GROUP BY d.day
-        ORDER BY d.day;
+            SELECT 
+                d.day,
+                COALESCE(COUNT(pv.id), 0) AS views
+            FROM 
+                generate_series(
+                    NOW() - ($2::text)::interval,
+                    NOW(), 
+                    INTERVAL '1 day'
+                ) AS d(day)
+            LEFT JOIN page_visits pv 
+                ON DATE_TRUNC('day', pv.visited_at) = DATE_TRUNC('day', d.day)
+                AND pv.website = $1
+            GROUP BY d.day
+            ORDER BY d.day;
         "#;
 
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
+            .bind::<diesel::sql_types::Text, _>(days)
             .load::<DailyView>(&mut self.conn)?;
 
         Ok(results)
     }
-    
+
     pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
         use crate::schema::websites::dsl::*;
 

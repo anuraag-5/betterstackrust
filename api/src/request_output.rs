@@ -42,5 +42,6 @@ pub struct User {
     pub id: String,
     pub name: String,
     pub email: String,
+    pub plan_type: String,
     pub success: bool
 }
