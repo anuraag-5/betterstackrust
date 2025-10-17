@@ -1,5 +1,5 @@
 use crate::{models::user::{User, UserOutput}, schema::page_visits, store::Store};
-use diesel::{dsl::count, prelude::*, result::Error};
+use diesel::{prelude::*, result::Error};
 
 #[derive(Queryable, Insertable, Selectable)]
 #[diesel(table_name = crate::schema::page_visits)]

@@ -4,7 +4,7 @@ use url::Url;
 use poem::{
     handler,
     http::header,
-    web::{Data, Json, Path},
+    web::{Data, Json},
     Response,
 };
 use store::{models::app::PageVisit, store::Store};
@@ -12,7 +12,7 @@ use store::{models::app::PageVisit, store::Store};
 use crate::{
     auth_middleware::UserIdFromHeader,
     request_input::TrackingInput,
-    request_output::{TotalViewsOutput, User},
+    request_output::{User},
 };
 
 #[handler]
