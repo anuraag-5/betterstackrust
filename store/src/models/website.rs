@@ -46,6 +46,15 @@ pub struct DailyView {
     pub views: i64,
 }
 
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct MinuteView {
+    #[diesel(sql_type = diesel::sql_types::Timestamp)]
+    pub minute: chrono::NaiveDateTime,
+
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub views: i64,
+}
+
 impl Store {
     pub fn create_website(
         &mut self,
@@ -155,6 +164,44 @@ impl Store {
         Ok(results)
     }
 
+    pub fn get_website_details_last_hour(
+        &mut self,
+        input_website_url: String,
+        input_user_id: String,
+    ) -> Result<Vec<MinuteView>, Error> {
+        use crate::schema::websites::dsl::*;
+    
+        let _website_result = websites
+            .filter(url.eq(&input_website_url))
+            .filter(user_id.eq(input_user_id))
+            .select(Website::as_select())
+            .first(&mut self.conn)?;
+    
+        // Query: generate a 1-minute series for the past 60 minutes
+        let query = r#"
+            SELECT 
+                d.minute AS minute,
+                COALESCE(COUNT(pv.id), 0) AS views
+            FROM 
+                generate_series(
+                    NOW() - INTERVAL '1 hour',
+                    NOW(),
+                    INTERVAL '1 minute'
+                ) AS d(minute)
+            LEFT JOIN page_visits pv 
+                ON DATE_TRUNC('minute', pv.visited_at) = DATE_TRUNC('minute', d.minute)
+                AND pv.website = $1
+            GROUP BY d.minute
+            ORDER BY d.minute;
+        "#;
+    
+        let results = diesel::sql_query(query)
+            .bind::<diesel::sql_types::Text, _>(input_website_url)
+            .load::<MinuteView>(&mut self.conn)?;
+    
+        Ok(results)
+    }
+    
     pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
         use crate::schema::websites::dsl::*;
 

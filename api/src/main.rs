@@ -4,7 +4,7 @@ use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{get_user};
 use crate::route::user::logout_user;
-use crate::route::website::{get_details_hourly, get_details_daily, get_users_websites, create_website};
+use crate::route::website::{get_details_last_hour, get_details_hourly, get_details_daily, get_users_websites, create_website};
 use crate::route::{
     app::{snippet, track},
     user::{create_user, sign_in_user}
@@ -35,6 +35,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     let app = Route::new()
         .at("/api/website", post(create_website))
+        .at("/api/website/last_hour", post(get_details_last_hour))
         .at("/api/website/hourly", post(get_details_hourly))
         .at("/api/website/daily", post(get_details_daily))
         .at("/api/user/signup", post(create_user))

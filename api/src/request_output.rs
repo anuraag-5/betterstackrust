@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use store::models::website::{DailyView, HourlyView};
+use store::models::website::{DailyView, HourlyView, MinuteView};
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateWebsiteOutput {
@@ -16,6 +16,12 @@ pub struct CreateUserOutput {
 #[derive(Serialize, Deserialize)]
 pub struct SigninUserOutput {
     pub jwt: String,
+    pub success: bool
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetWebsiteDetailsLastHourOutput {
+    pub data: Option<Vec<MinuteView>>,
     pub success: bool
 }
 

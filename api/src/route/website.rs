@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     auth_middleware::UserIdFromHeader,
-    request_input::{ CreateWebsiteInput, UsersWebsites, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput },
-    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsDailyOutput },
+    request_input::{ CreateWebsiteInput, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput, GetWebsiteDetailsLastHourInput, UsersWebsites },
+    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsDailyOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsLastHourOutput },
 };
 use poem::{
     handler,
@@ -70,6 +70,26 @@ pub fn get_details_daily(
         }),
     }
 }
+
+#[handler]
+pub fn get_details_last_hour(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetWebsiteDetailsLastHourInput>
+) -> Json<GetWebsiteDetailsLastHourOutput> {
+    let mut locked_s = s.lock().unwrap();
+    let website_result = locked_s.get_website_details_last_hour(data.website, data.user_id);
+    match website_result {
+        Ok(w) => Json(GetWebsiteDetailsLastHourOutput {
+            data: Some(w),
+            success: true,
+        }),
+        Err(_) => Json(GetWebsiteDetailsLastHourOutput {
+            data: None,
+            success: false,
+        }),
+    }
+}
+
 #[handler]
 pub fn get_users_websites(
     Data(s): Data<&Arc<Mutex<Store>>>,

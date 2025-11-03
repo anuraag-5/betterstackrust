@@ -49,3 +49,9 @@ pub struct GetWebsiteDetailsHourlyInput {
     pub website: String,
     pub hour:  String
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct GetWebsiteDetailsLastHourInput {
+    pub user_id: String,
+    pub website: String
+}
