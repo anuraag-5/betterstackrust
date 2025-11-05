@@ -92,6 +92,7 @@ pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>)
 
             match website {
                 Ok(w) => {
+                    locked_s.update_website_snippet(domain);
                     let page_visit = PageVisit {
                         visitor_id,
                         referrer,

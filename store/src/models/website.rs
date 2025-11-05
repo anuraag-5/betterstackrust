@@ -69,7 +69,7 @@ impl Store {
             user_id: u_i,
             is_snippet_added: false,
             about: input_about,
-            plan_name: "basic".to_owned(),
+            plan_name: "Basic".to_owned(),
         };
 
         let created_website = diesel::insert_into(crate::schema::websites::table)
@@ -108,7 +108,7 @@ impl Store {
         FROM page_visits
         WHERE 
             website = $1
-            AND visited_at >= NOW() - ($2::text)::interval
+            AND visited_at >= (NOW() AT TIME ZONE 'UTC') - ($2::text)::interval
         GROUP BY hour
         ORDER BY hour;
         "#;
@@ -234,5 +234,15 @@ impl Store {
             .load(&mut self.conn)?;
 
         Ok(websites_result)
+    }
+
+    pub fn update_website_snippet(&mut self, input_website_url: &str) -> () {
+        let query = r#"
+        UPDATE websites SET is_snippet_added=TRUE where url = $1;
+        "#;
+
+        let _ = diesel::sql_query(query)
+        .bind::<diesel::sql_types::Text, _>(input_website_url)
+        .execute(&mut self.conn);
     }
 }
