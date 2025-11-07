@@ -11,8 +11,8 @@ use store::{models::app::PageVisit, store::Store};
 
 use crate::{
     auth_middleware::UserIdFromHeader,
-    request_input::TrackingInput,
-    request_output::{User},
+    request_input::{GetViewsPerPageInput, TrackingInput},
+    request_output::{GetViewsPerPageOutput, User},
 };
 
 #[handler]
@@ -112,24 +112,16 @@ pub fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>)
     }
 }
 
-// #[handler]
-// pub fn total_views(
-//     Data(s): Data<&Arc<Mutex<Store>>>,
-// ) -> Json<TotalViewsOutput> {
-//     let mut locked_s = s.lock().unwrap();
-//     let res = locked_s.get_total_views(w_id);
+#[handler]
+pub fn total_views_per_page(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetViewsPerPageOutput> {
+  let mut locked_s = s.lock().unwrap();
+  let res = locked_s.get_per_page_views(data.website);
 
-//     match res {
-//         Ok(count) => Json(TotalViewsOutput {
-//             total_views: count,
-//             success: true,
-//         }),
-//         Err(_) => Json(TotalViewsOutput {
-//             total_views: 0,
-//             success: false,
-//         }),
-//     }
-// }
+  match res {
+      Ok(d) => Json(GetViewsPerPageOutput { data: Some(d), success: true}),
+      Err(_) => Json(GetViewsPerPageOutput { data: None, success: false })
+  }
+}
 
 #[handler]
 pub fn get_user(

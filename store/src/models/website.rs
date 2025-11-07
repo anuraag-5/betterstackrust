@@ -55,6 +55,15 @@ pub struct MinuteView {
     pub views: i64,
 }
 
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct TotalViewsPerPage {
+    #[diesel(sql_type = diesel::sql_types::Text)]
+    pub page_path: String,
+
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub total_views: i64,
+}
+
 impl Store {
     pub fn create_website(
         &mut self,
@@ -170,13 +179,13 @@ impl Store {
         input_user_id: String,
     ) -> Result<Vec<MinuteView>, Error> {
         use crate::schema::websites::dsl::*;
-    
+
         let _website_result = websites
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
             .first(&mut self.conn)?;
-    
+
         // Query: generate a 1-minute series for the past 60 minutes
         let query = r#"
             SELECT 
@@ -194,14 +203,14 @@ impl Store {
             GROUP BY d.minute
             ORDER BY d.minute;
         "#;
-    
+
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
             .load::<MinuteView>(&mut self.conn)?;
-    
+
         Ok(results)
     }
-    
+
     pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
         use crate::schema::websites::dsl::*;
 
@@ -242,7 +251,26 @@ impl Store {
         "#;
 
         let _ = diesel::sql_query(query)
-        .bind::<diesel::sql_types::Text, _>(input_website_url)
-        .execute(&mut self.conn);
+            .bind::<diesel::sql_types::Text, _>(input_website_url)
+            .execute(&mut self.conn);
+    }
+
+    pub fn get_per_page_views(&mut self, input_website: String) -> Result<Vec<TotalViewsPerPage>, Error> {
+        let query = r#"SELECT 
+            page_path,
+            COUNT(*) AS total_views
+            FROM 
+            page_visits
+            WHERE
+            website = $1
+            GROUP BY 
+            page_path
+            ORDER BY 
+            total_views DESC;
+        "#;
+
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).load::<TotalViewsPerPage>(&mut self.conn)?;
+
+        Ok(res)
     }
 }
