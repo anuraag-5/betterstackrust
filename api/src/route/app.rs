@@ -12,7 +12,7 @@ use store::{models::app::PageVisit, store::Store};
 use crate::{
     auth_middleware::UserIdFromHeader,
     request_input::{GetViewsPerPageInput, TrackingInput},
-    request_output::{GetViewsPerPageOutput, User},
+    request_output::{GetTotalUniqueUsersOutput, GetTotalViewsOutput, GetViewsPerPageOutput, User},
 };
 
 #[handler]
@@ -120,6 +120,27 @@ pub fn total_views_per_page(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<
   match res {
       Ok(d) => Json(GetViewsPerPageOutput { data: Some(d), success: true}),
       Err(_) => Json(GetViewsPerPageOutput { data: None, success: false })
+  }
+}
+
+#[handler]
+pub fn total_unique_users(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetTotalUniqueUsersOutput> {
+  let mut locked_s = s.lock().unwrap();
+  let res = locked_s.get_total_unique_users(data.website);
+
+  match res {
+      Ok(d) => Json(GetTotalUniqueUsersOutput { data: Some(d), success: true }),
+      Err(_) => Json(GetTotalUniqueUsersOutput { data: None, success: false })
+  }
+}
+#[handler]
+pub fn total_views(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetTotalViewsOutput> {
+  let mut locked_s = s.lock().unwrap();
+  let res = locked_s.get_total_views(data.website);
+
+  match res {
+      Ok(d) => Json(GetTotalViewsOutput { data: Some(d), success: true }),
+      Err(_) => Json(GetTotalViewsOutput { data: None, success: false })
   }
 }
 

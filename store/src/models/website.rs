@@ -64,6 +64,19 @@ pub struct TotalViewsPerPage {
     pub total_views: i64,
 }
 
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct TotalUniqueUsers {
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub unique_users: i64,
+}
+
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct TotalViews {
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
+    pub total_views: i64,
+}
+
+
 impl Store {
     pub fn create_website(
         &mut self,
@@ -273,4 +286,36 @@ impl Store {
 
         Ok(res)
     }
+
+    pub fn get_total_unique_users(&mut self, input_website: String) -> Result<TotalUniqueUsers, Error> {
+        let query = r#"
+        SELECT
+        COUNT(DISTINCT visitor_id) AS unique_users
+        FROM 
+        page_visits 
+        WHERE website = $1;
+        "#;
+
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<TotalUniqueUsers>(&mut self.conn)?;
+
+        Ok(res)
+    }
+
+    pub fn get_total_views(&mut self, input_website: String) -> Result<TotalViews, Error> {
+        let query = r#"
+            SELECT 
+                COUNT(*) AS total_views
+            FROM 
+                page_visits
+            WHERE 
+                website = $1;
+        "#;
+    
+        let res = diesel::sql_query(query)
+            .bind::<diesel::sql_types::Text, _>(input_website)
+            .get_result::<TotalViews>(&mut self.conn)?;
+    
+        Ok(res)
+    }
+    
 }

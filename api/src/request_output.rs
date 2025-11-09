@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use store::models::website::{DailyView, HourlyView, MinuteView, TotalViewsPerPage};
+use store::models::website::{DailyView, HourlyView, MinuteView, TotalUniqueUsers, TotalViews, TotalViewsPerPage};
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateWebsiteOutput {
@@ -26,6 +26,18 @@ pub struct GetViewsPerPageOutput {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct GetTotalUniqueUsersOutput {
+    pub data: Option<TotalUniqueUsers>,
+    pub success: bool
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetTotalViewsOutput {
+    pub data: Option<TotalViews>,
+    pub success: bool
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct GetWebsiteDetailsLastHourOutput {
     pub data: Option<Vec<MinuteView>>,
     pub success: bool
@@ -40,12 +52,6 @@ pub struct GetWebsiteDetailsHourlyOutput {
 #[derive(Serialize, Deserialize)]
 pub struct GetWebsiteDetailsDailyOutput {
     pub data: Option<Vec<DailyView>>,
-    pub success: bool
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TotalViewsOutput {
-    pub total_views: i64,
     pub success: bool
 }
 
