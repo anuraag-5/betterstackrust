@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use diesel_async::RunQueryDsl;
 use dotenvy::dotenv;
 use redisstreams::redis::Redis;
 use reqwest::StatusCode;
@@ -30,7 +31,7 @@ async fn main_loop() -> Result<(), Error> {
     })?;
 
     let mut str =
-        Store::default().map_err(|e| Error::new(std::io::ErrorKind::ConnectionRefused, e))?;
+        Store::default().await.map_err(|e| Error::new(std::io::ErrorKind::ConnectionRefused, e))?;
 
     loop {
         let cloned_region = region.clone();
@@ -67,7 +68,7 @@ async fn main_loop() -> Result<(), Error> {
             None => {}
         }
 
-        sleep(Duration::from_secs(3)).await;
+        sleep(Duration::from_secs(10)).await;
     }
 }
 
@@ -99,7 +100,7 @@ async fn fetch_website(s: &mut Store, url: String, website_url: String) {
                 let _ = diesel::insert_into(website_tick::table)
                     .values(website_tick)
                     .returning(WebsiteTick::as_returning())
-                    .get_result(&mut s.conn);
+                    .get_result(&mut s.conn).await;
             } else {
                 let website_tick = WebsiteTick {
                     id: Uuid::new_v4().to_string(),
@@ -112,7 +113,7 @@ async fn fetch_website(s: &mut Store, url: String, website_url: String) {
                 let _ = diesel::insert_into(website_tick::table)
                     .values(website_tick)
                     .returning(WebsiteTick::as_returning())
-                    .get_result(&mut s.conn);
+                    .get_result(&mut s.conn).await;
             }
         }
 
@@ -128,7 +129,7 @@ async fn fetch_website(s: &mut Store, url: String, website_url: String) {
             let _ = diesel::insert_into(website_tick::table)
                 .values(website_tick)
                 .returning(WebsiteTick::as_returning())
-                .get_result(&mut s.conn);
+                .get_result(&mut s.conn).await;
         }
     }
 }

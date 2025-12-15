@@ -1,14 +1,15 @@
 use crate::config::Config;
 use diesel::prelude::*;
+use diesel_async:: {AsyncPgConnection, AsyncConnection };
 
 pub struct Store {
-    pub conn: PgConnection,
+    pub conn: AsyncPgConnection
 }
 
 impl Store {
-    pub fn default() -> Result<Self, ConnectionError> {
+    pub async fn default() -> Result<Self, ConnectionError> {
         let config = Config::default();
-        let connection = PgConnection::establish(&config.db_url)?;
+        let connection = AsyncPgConnection::establish(&config.db_url).await?;
         Ok(Self { conn: connection })
     }
 }

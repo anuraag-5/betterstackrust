@@ -1,5 +1,6 @@
 use crate::{models::user::{User, UserOutput}, schema::page_visits, store::Store};
 use diesel::{prelude::*, result::Error};
+use diesel_async::RunQueryDsl;
 
 #[derive(Queryable, Insertable, Selectable)]
 #[diesel(table_name = crate::schema::page_visits)]
@@ -14,10 +15,10 @@ pub struct PageVisit {
 
 impl Store {
 
-    pub fn get_user(&mut self, input_user_id: String) -> Option<UserOutput> {
+    pub async fn get_user(&mut self, input_user_id: String) -> Option<UserOutput> {
         use crate::schema::users::dsl::*;
 
-        let user = users.filter(id.eq(input_user_id)).select(User::as_select()).get_result(&mut self.conn);
+        let user = users.filter(id.eq(input_user_id)).select(User::as_select()).get_result(&mut self.conn).await;
 
         match user {
             Ok(user) => {
@@ -30,11 +31,11 @@ impl Store {
         }
     }
 
-    pub fn store_tracks(&mut self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
+    pub async fn store_tracks(&mut self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
         let created_page_visit = diesel::insert_into(page_visits::table)
             .values(page_visit_data)
             .returning(PageVisit::as_returning())
-            .get_result(&mut self.conn)?;
+            .get_result(&mut self.conn).await?;
 
         Ok(created_page_visit)
     }

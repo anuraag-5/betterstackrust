@@ -1,5 +1,6 @@
 use crate::store::Store;
 use diesel::{prelude::*, result::Error};
+use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
 #[derive(Queryable, Insertable, Selectable)]
@@ -21,7 +22,7 @@ pub struct UserOutput {
 }
 
 impl Store {
-    pub fn sign_up(
+    pub async fn sign_up(
         &mut self,
         username: String,
         user_password: String,
@@ -38,7 +39,7 @@ impl Store {
         let result = diesel::insert_into(crate::schema::users::table)
             .values(new_user)
             .returning(User::as_returning())
-            .get_result(&mut self.conn);
+            .get_result(&mut self.conn).await;
 
         match result {
             Ok(u) => {
@@ -50,7 +51,7 @@ impl Store {
         }
     }
 
-    pub fn sign_in(
+    pub async fn sign_in(
         &mut self,
         input_email: String,
         user_password: String,
@@ -60,7 +61,7 @@ impl Store {
         let signed_in_user = users
             .filter(email.eq(input_email))
             .select(User::as_select())
-            .load(&mut self.conn);
+            .load(&mut self.conn).await;
 
         match signed_in_user {
             Ok(u) => {

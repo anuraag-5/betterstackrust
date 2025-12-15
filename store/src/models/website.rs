@@ -1,6 +1,7 @@
 use crate::store::Store;
 use chrono::{NaiveDateTime, Utc};
 use diesel::{prelude::*, result::Error};
+use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -78,7 +79,7 @@ pub struct TotalViews {
 
 
 impl Store {
-    pub fn create_website(
+    pub async fn create_website(
         &mut self,
         u_i: String,
         new_url: String,
@@ -97,7 +98,7 @@ impl Store {
         let created_website = diesel::insert_into(crate::schema::websites::table)
             .values(new_website)
             .returning(Website::as_returning())
-            .get_result(&mut self.conn);
+            .get_result(&mut self.conn).await;
 
         match created_website {
             Ok(w) => Ok(w),
@@ -105,7 +106,7 @@ impl Store {
         }
     }
 
-    pub fn get_website_details_hourly(
+    pub async fn get_website_details_hourly(
         &mut self,
         input_website_url: String,
         input_user_id: String,
@@ -121,7 +122,7 @@ impl Store {
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)?;
+            .first(&mut self.conn).await?;
 
         let query = r#"
         SELECT 
@@ -138,12 +139,12 @@ impl Store {
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
             .bind::<diesel::sql_types::Text, _>(hours)
-            .load::<HourlyView>(&mut self.conn)?;
+            .load::<HourlyView>(&mut self.conn).await?;
 
         Ok(results)
     }
 
-    pub fn get_website_details_daily(
+    pub async fn get_website_details_daily(
         &mut self,
         input_website_url: String,
         input_user_id: String,
@@ -159,7 +160,7 @@ impl Store {
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)?;
+            .first(&mut self.conn).await?;
 
         let query = r#"
             SELECT 
@@ -181,12 +182,12 @@ impl Store {
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
             .bind::<diesel::sql_types::Text, _>(days)
-            .load::<DailyView>(&mut self.conn)?;
+            .load::<DailyView>(&mut self.conn).await?;
 
         Ok(results)
     }
 
-    pub fn get_website_details_last_hour(
+    pub async fn get_website_details_last_hour(
         &mut self,
         input_website_url: String,
         input_user_id: String,
@@ -197,7 +198,7 @@ impl Store {
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)?;
+            .first(&mut self.conn).await?;
 
         // Query: generate a 1-minute series for the past 60 minutes
         let query = r#"
@@ -219,56 +220,56 @@ impl Store {
 
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
-            .load::<MinuteView>(&mut self.conn)?;
+            .load::<MinuteView>(&mut self.conn).await?;
 
         Ok(results)
     }
 
-    pub fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
+    pub async fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
         use crate::schema::websites::dsl::*;
 
         let found_website = websites
             .filter(url.eq(input_url))
             .select(Website::as_select())
-            .first(&mut self.conn)?;
+            .first(&mut self.conn).await?;
 
         Ok(found_website)
     }
 
-    pub fn get_all_websites(
+    pub async fn get_all_websites(
         &mut self,
     ) -> Result<Vec<(String, String, String, bool)>, diesel::result::Error> {
         use crate::schema::websites::dsl::*;
 
         let websites_result = websites
             .select((url, id, user_id, is_snippet_added))
-            .load::<(String, String, String, bool)>(&mut self.conn)?;
+            .load::<(String, String, String, bool)>(&mut self.conn).await?;
 
         Ok(websites_result)
     }
 
-    pub fn get_users_all_websites(&mut self, input_user_id: String) -> Result<Vec<Website>, Error> {
+    pub async fn get_users_all_websites(&mut self, input_user_id: String) -> Result<Vec<Website>, Error> {
         use crate::schema::websites::dsl::*;
 
         let websites_result = websites
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .load(&mut self.conn)?;
+            .load(&mut self.conn).await?;
 
         Ok(websites_result)
     }
 
-    pub fn update_website_snippet(&mut self, input_website_url: &str) -> () {
+    pub async fn update_website_snippet(&mut self, input_website_url: &str) -> () {
         let query = r#"
         UPDATE websites SET is_snippet_added=TRUE where url = $1;
         "#;
 
         let _ = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
-            .execute(&mut self.conn);
+            .execute(&mut self.conn).await;
     }
 
-    pub fn get_per_page_views(&mut self, input_website: String) -> Result<Vec<TotalViewsPerPage>, Error> {
+    pub async fn get_per_page_views(&mut self, input_website: String) -> Result<Vec<TotalViewsPerPage>, Error> {
         let query = r#"SELECT 
             page_path,
             COUNT(*) AS total_views
@@ -282,12 +283,12 @@ impl Store {
             total_views DESC;
         "#;
 
-        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).load::<TotalViewsPerPage>(&mut self.conn)?;
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).load::<TotalViewsPerPage>(&mut self.conn).await?;
 
         Ok(res)
     }
 
-    pub fn get_total_unique_users(&mut self, input_website: String) -> Result<TotalUniqueUsers, Error> {
+    pub async fn get_total_unique_users(&mut self, input_website: String) -> Result<TotalUniqueUsers, Error> {
         let query = r#"
         SELECT
         COUNT(DISTINCT visitor_id) AS unique_users
@@ -296,12 +297,12 @@ impl Store {
         WHERE website = $1;
         "#;
 
-        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<TotalUniqueUsers>(&mut self.conn)?;
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<TotalUniqueUsers>(&mut self.conn).await?;
 
         Ok(res)
     }
 
-    pub fn get_total_views(&mut self, input_website: String) -> Result<TotalViews, Error> {
+    pub async fn get_total_views(&mut self, input_website: String) -> Result<TotalViews, Error> {
         let query = r#"
             SELECT 
                 COUNT(*) AS total_views
@@ -313,7 +314,7 @@ impl Store {
     
         let res = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .get_result::<TotalViews>(&mut self.conn)?;
+            .get_result::<TotalViews>(&mut self.conn).await?;
     
         Ok(res)
     }
