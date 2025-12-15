@@ -11,3 +11,5 @@ serde = { version = "1.0", features = ["derive"] }
 dotenvy = "0.15"
 store = { path = "../store"}
 jsonwebtoken = "9"
+diesel = { version = "2.2.0", features = ["postgres", "chrono"] }
+diesel-async = { version = "0.7.0", features = ["postgres"] }

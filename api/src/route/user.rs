@@ -1,4 +1,6 @@
-use std::{env, sync::{Arc, Mutex}};
+use std::{env, sync::{Arc}};
+use tokio::sync::{Mutex};
+
 
 use crate::{
     request_input::{CreateUserInput, SignInUserInput},
@@ -21,7 +23,7 @@ pub struct Claims {
 }
 
 #[handler]
-pub fn create_user(
+pub async fn create_user(
     Json(data): Json<CreateUserInput>,
     Data(s): Data<&Arc<Mutex<Store>>>,
 ) -> Result<Json<CreateUserOutput>, Error> {
@@ -29,9 +31,9 @@ pub fn create_user(
     let user_password = data.password;
     let name = data.name;
 
-    let mut locked_s = s.lock().unwrap();
+    let mut locked_s = s.lock().await;
     let result = locked_s
-        .sign_up(username, user_password, name)
+        .sign_up(username, user_password, name).await
         .map_err(|_| Error::from_status(StatusCode::CONFLICT))?;
 
     Ok(Json(CreateUserOutput {
@@ -41,15 +43,15 @@ pub fn create_user(
 }
 
 #[handler]
-pub fn sign_in_user(
+pub async fn sign_in_user(
     Json(data): Json<SignInUserInput>,
     Data(s): Data<&Arc<Mutex<Store>>>,
 ) -> Result<Response, Error> {
     let username = data.username;
     let user_password = data.password;
 
-    let mut locked_s = s.lock().unwrap();
-    let result = locked_s.sign_in(username, user_password);
+    let mut locked_s = s.lock().await;
+    let result = locked_s.sign_in(username, user_password).await;
 
     match result {
         Ok(user) => {
@@ -84,7 +86,7 @@ pub fn sign_in_user(
 }
 
 #[handler]
-pub fn logout_user() ->  Response {
+pub async fn logout_user() ->  Response {
     Response::builder()
     .status(StatusCode::OK)
     .header(

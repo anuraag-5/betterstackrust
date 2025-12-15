@@ -12,9 +12,10 @@ use crate::route::{
 use poem::middleware::{CookieJarManager, Cors};
 use std::{
     io::Error,
-    sync::{Arc, Mutex},
+    sync::{Arc},
 };
 use store::store::Store;
+use tokio::sync::Mutex;
 
 pub mod auth_middleware;
 pub mod request_input;
@@ -26,7 +27,7 @@ async fn main() -> Result<(), std::io::Error> {
     dotenv().ok();
 
     let s = Arc::new(Mutex::new(
-        Store::default().map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?,
+        Store::default().await.map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?,
     ));
 
     let cors = Cors::new()

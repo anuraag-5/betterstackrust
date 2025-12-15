@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
+use tokio::sync::Mutex;
 
 use crate::{
     auth_middleware::UserIdFromHeader,
@@ -12,15 +13,15 @@ use poem::{
 use store::{store::Store};
 
 #[handler]
-pub fn create_website(
+pub async fn create_website(
     Json(data): Json<CreateWebsiteInput>,
     Data(s): Data<&Arc<Mutex<Store>>>
 ) -> Json<CreateWebsiteOutput> {
     let url = data.url;
     let about = data.about;
     let user_id= data.user_id;
-    let mut locked_s = s.lock().unwrap();
-    let created_website = locked_s.create_website(user_id, url, about);
+    let mut locked_s = s.lock().await;
+    let created_website = locked_s.create_website(user_id, url, about).await;
     match created_website {
         Ok(w) => Json(CreateWebsiteOutput {
             website_id: w.id,
@@ -34,12 +35,12 @@ pub fn create_website(
 }
 
 #[handler]
-pub fn get_details_hourly(
+pub async fn get_details_hourly(
     Data(s): Data<&Arc<Mutex<Store>>>,
     Json(data): Json<GetWebsiteDetailsHourlyInput>
 ) -> Json<GetWebsiteDetailsHourlyOutput> {
-    let mut locked_s = s.lock().unwrap();
-    let website_result = locked_s.get_website_details_hourly(data.website, data.user_id, data.hour);
+    let mut locked_s = s.lock().await;
+    let website_result = locked_s.get_website_details_hourly(data.website, data.user_id, data.hour).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsHourlyOutput {
             data: Some(w),
@@ -53,12 +54,12 @@ pub fn get_details_hourly(
 }
 
 #[handler]
-pub fn get_details_daily(
+pub async fn get_details_daily(
     Data(s): Data<&Arc<Mutex<Store>>>,
     Json(data): Json<GetWebsiteDetailsDailyInput>
 ) -> Json<GetWebsiteDetailsDailyOutput> {
-    let mut locked_s = s.lock().unwrap();
-    let website_result = locked_s.get_website_details_daily(data.website, data.user_id, data.day);
+    let mut locked_s = s.lock().await;
+    let website_result = locked_s.get_website_details_daily(data.website, data.user_id, data.day).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsDailyOutput {
             data: Some(w),
@@ -72,12 +73,12 @@ pub fn get_details_daily(
 }
 
 #[handler]
-pub fn get_details_last_hour(
+pub async fn get_details_last_hour(
     Data(s): Data<&Arc<Mutex<Store>>>,
     Json(data): Json<GetWebsiteDetailsLastHourInput>
 ) -> Json<GetWebsiteDetailsLastHourOutput> {
-    let mut locked_s = s.lock().unwrap();
-    let website_result = locked_s.get_website_details_last_hour(data.website, data.user_id);
+    let mut locked_s = s.lock().await;
+    let website_result = locked_s.get_website_details_last_hour(data.website, data.user_id).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsLastHourOutput {
             data: Some(w),
@@ -91,12 +92,12 @@ pub fn get_details_last_hour(
 }
 
 #[handler]
-pub fn get_users_websites(
+pub async fn get_users_websites(
     Data(s): Data<&Arc<Mutex<Store>>>,
     UserIdFromHeader(user_id): UserIdFromHeader
 ) -> Json<UsersWebsites> {
-    let mut locked_s = s.lock().unwrap();
-    let res = locked_s.get_users_all_websites(user_id);
+    let mut locked_s = s.lock().await;
+    let res = locked_s.get_users_all_websites(user_id).await;
 
     match res {
         Ok(websites) => {
