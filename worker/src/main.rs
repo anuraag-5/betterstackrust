@@ -23,7 +23,7 @@ async fn main_loop() -> Result<(), Error> {
         ));
     }
 
-    let mut r = Redis::default().map_err(|e| {
+    let mut r = Redis::default().await.map_err(|e| {
         Error::new(
             std::io::ErrorKind::ConnectionRefused,
             format!("Redis connection error. {}", e),
@@ -38,8 +38,8 @@ async fn main_loop() -> Result<(), Error> {
         let cloned_worker_id = worker_id.clone();
 
         let messages = r
-            .x_read_group(cloned_region, cloned_worker_id)
-            .map_err(|e| {
+            .x_read_group(&cloned_region, &cloned_worker_id)
+            .await.map_err(|e| {
                 Error::new(
                     std::io::ErrorKind::InvalidData,
                     format!("XREADGROUP Error {}", e),
@@ -50,18 +50,21 @@ async fn main_loop() -> Result<(), Error> {
             Some(s) => {
                 let streams = s.keys;
                 for stream in streams {
-                    let stream_ids = stream.ids;
+                    let stream_name = stream.key;
 
-                    for stream_id in stream_ids {
+                    println!("{}", stream_name);
+                
+                    for stream_id in stream.ids {
+                        let message_id = stream_id.id;
                         let map = stream_id.map;
+                
                         let url_value = map.get("url").unwrap();
-                        let website_id_value = map.get("id").unwrap();
-
                         let url = redis::from_redis_value::<String>(url_value).unwrap();
-                        let website_id =
-                            redis::from_redis_value::<String>(website_id_value).unwrap();
-
-                        fetch_website(&mut str, url, website_id).await;
+                        println!("{}", url);
+                        let _ = fetch_website(&mut str, url).await;
+                
+                        // ✅ ACK MESSAGE
+                        r.x_ack_bulk(&cloned_region, &[message_id]).await;
                     }
                 }
             }
@@ -79,9 +82,9 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn fetch_website(s: &mut Store, url: String, website_url: String) {
+async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
     let start_time = Instant::now();
-
+    let region = env::var("REGION").map_err(|e| Error::new(std::io::ErrorKind::InvalidInput, e))?;
     let res = reqwest::get(format!("https://{}", url)).await;
 
     let total_time = start_time.elapsed().as_millis() as i32;
@@ -89,47 +92,65 @@ async fn fetch_website(s: &mut Store, url: String, website_url: String) {
     match res {
         Ok(rps) => {
             if rps.status() == StatusCode::OK {
+                println!("Ok");
                 let website_tick = WebsiteTick {
                     id: Uuid::new_v4().to_string(),
                     response_time_ms: total_time,
                     status: "Up".to_owned(),
-                    region_id: "1".to_owned(),
-                    website_url,
+                    region: region,
+                    website_url: url,
                 };
 
-                let _ = diesel::insert_into(website_tick::table)
-                    .values(website_tick)
+                let val = diesel::insert_into(website_tick::table)
+                    .values(&website_tick)
                     .returning(WebsiteTick::as_returning())
                     .get_result(&mut s.conn).await;
+
+                match val {
+                    Ok(w) => {
+                        println!("{}", w.response_time_ms);
+                        return Ok(());
+                    },
+                    Err(e) => {
+                        println!("DB insert error: {:?}", e);
+                        return Ok(());
+                    }
+                }
             } else {
+                println!("Not Ok");
                 let website_tick = WebsiteTick {
                     id: Uuid::new_v4().to_string(),
                     response_time_ms: total_time,
                     status: "Down".to_owned(),
-                    region_id: "1".to_owned(),
-                    website_url,
+                    region: region,
+                    website_url: url,
                 };
 
                 let _ = diesel::insert_into(website_tick::table)
                     .values(website_tick)
                     .returning(WebsiteTick::as_returning())
                     .get_result(&mut s.conn).await;
+
+                return Ok(());
             }
         }
 
-        Err(_) => {
+        Err(e) => {
+            println!("Unknown: {}", e);
             let website_tick = WebsiteTick {
                 id: Uuid::new_v4().to_string(),
                 response_time_ms: total_time,
                 status: "Unknown".to_owned(),
-                region_id: "1".to_owned(),
-                website_url,
+                region: region,
+                website_url: url,
             };
 
             let _ = diesel::insert_into(website_tick::table)
                 .values(website_tick)
                 .returning(WebsiteTick::as_returning())
                 .get_result(&mut s.conn).await;
+
+            return Ok(());
         }
     }
 }

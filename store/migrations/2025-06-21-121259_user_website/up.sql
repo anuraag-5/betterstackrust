@@ -49,12 +49,12 @@ CREATE TABLE "website_tick" (
     "id" TEXT NOT NULL,
     "response_time_ms" INTEGER NOT NULL,
     "status" TEXT NOT NULL,
-    "region_id" TEXT NOT NULL,
+    "region" TEXT NOT NULL,
     "website_url" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "WebsiteTick_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "website_tick_region_id_fkey"
-        FOREIGN KEY ("region_id") REFERENCES "region"("id")
+        FOREIGN KEY ("region") REFERENCES "region"("name")
         ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "website_tick_website_url_fkey"
         FOREIGN KEY ("website_url") REFERENCES "websites"("url")

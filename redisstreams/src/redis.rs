@@ -1,5 +1,5 @@
 use crate::config::Config;
-use redis::{streams::StreamReadOptions, Connection, RedisError, TypedCommands};
+use redis::{ AsyncCommands, RedisError, aio::MultiplexedConnection, streams::StreamReadOptions };
 
 pub struct WebsiteEvent {
     pub url: String,
@@ -8,53 +8,53 @@ pub struct WebsiteEvent {
     pub is_snipp_added: bool
 }
 pub struct Redis {
-    pub conn: Connection,
+    pub conn: MultiplexedConnection,
 }
 
 impl Redis {
-    pub fn default() -> Result<Self, RedisError> {
+    pub async fn default() -> Result<Self, RedisError> {
         let config = Config::default();
-        let establish = redis::Client::open(config.redis_url)?;
-        let conn = establish.get_connection()?;
+        let client = redis::Client::open(config.redis_url)?;
+        let conn = client.get_multiplexed_async_connection().await?;
 
         Ok(Redis { conn })
     }
 
-    fn x_add(&mut self, website: WebsiteEvent) {
-        let _ = self.conn.xadd(
+    async fn x_add(&mut self, website: &WebsiteEvent) {
+        let _: Result<String, RedisError> = self.conn.xadd(
             "betteruptime:website",
             "*",
-            &[("url", website.url), ("id", website.id)],
-        );
+            &[("url", website.url.clone()), ("id", website.id.clone())],
+        ).await;
     }
 
-    pub fn x_add_bulk(&mut self, websites: Vec<WebsiteEvent>) -> () {
+    pub async fn x_add_bulk(&mut self, websites: &Vec<WebsiteEvent>) -> () {
 
         for website in websites {
             if website.is_snipp_added {
-                self.x_add(website);
+                self.x_add(website).await;
             }
         }
     }
 
-    pub fn x_read_group(&mut self, consumer_group: String, worker_id: String) -> Result<Option<redis::streams::StreamReadReply>, RedisError> {
+    pub async fn x_read_group(&mut self, consumer_group: &String, worker_id: &String) -> Result<Option<redis::streams::StreamReadReply>, RedisError> {
         let opts = StreamReadOptions::default().group(consumer_group, worker_id);
         let res = self
             .conn
-            .xread_options(&["betteruptime:website"], &[">"], &opts);
+            .xread_options(&["betteruptime:website"], &[">"], &opts).await;
 
         return res;
     }
 
-    fn x_ack(&mut self, consumer_group: String, event_id: String) {
-        let _ = self
+    async fn x_ack(&mut self, consumer_group: &String, event_id: String) {
+        let _: Result<String, RedisError>= self
             .conn
-            .xack("betteruptime:website", consumer_group, &[event_id]);
+            .xack("betteruptime:website", consumer_group, &[event_id]).await;
     }
     
-    pub fn x_ack_bulk(&mut self, consumer_group: String, event_ids: &[String]) -> () {
+    pub async fn x_ack_bulk(&mut self, consumer_group: &String, event_ids: &[String]) -> () {
         for event_id in event_ids {
-            self.x_ack(consumer_group.clone(), event_id.clone());
+            self.x_ack(&consumer_group, event_id.clone()).await;
         }
     }
 }

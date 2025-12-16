@@ -25,7 +25,7 @@ pub struct WebsiteTick {
     pub id: String,
     pub response_time_ms: i32,
     pub status: String,
-    pub region_id: String,
+    pub region: String,
     pub website_url: String,
 }
 
