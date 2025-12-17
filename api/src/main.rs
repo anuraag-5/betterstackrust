@@ -4,7 +4,7 @@ use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{get_user, total_unique_users, total_views, total_views_per_page};
 use crate::route::user::logout_user;
-use crate::route::website::{get_details_last_hour, get_details_hourly, get_details_daily, get_users_websites, create_website};
+use crate::route::website::{create_website, get_avg_resp, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_users_websites};
 use crate::route::{
     app::{snippet, track},
     user::{create_user, sign_in_user}
@@ -49,6 +49,8 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/get_user", get(get_user))
         .at("/api/user/logout", post(logout_user))
         .at("/api/user/get_all_websites", get(get_users_websites))
+        .at("/api/get_avg_resp", post(get_avg_resp))
+        .at("/api/get_uptime_percentage", post(get_uptime_percentage))
         .data(s)
         .with(cors)
         .with(CookieJarManager::new());

@@ -60,3 +60,13 @@ pub struct GetWebsiteDetailsLastHourInput {
     pub user_id: String,
     pub website: String
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct GetWebsiteAverageRespTime {
+    pub website: String
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetUptimePercentage {
+    pub website: String
+}

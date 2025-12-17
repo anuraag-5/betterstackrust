@@ -3,8 +3,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     auth_middleware::UserIdFromHeader,
-    request_input::{ CreateWebsiteInput, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput, GetWebsiteDetailsLastHourInput, UsersWebsites },
-    request_output::{ CreateWebsiteOutput, GetWebsiteDetailsDailyOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsLastHourOutput },
+    request_input::{ CreateWebsiteInput, GetUptimePercentage, GetWebsiteAverageRespTime, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput, GetWebsiteDetailsLastHourInput, UsersWebsites },
+    request_output::{ CreateWebsiteOutput, GetUptimePercentageOutput, GetWebsiteAvgRespTimeOutput, GetWebsiteDetailsDailyOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsLastHourOutput },
 };
 use poem::{
     handler,
@@ -107,6 +107,59 @@ pub async fn get_users_websites(
         Err(_) => {
             let users_websites = UsersWebsites { websites: None, success: false };
             Json(users_websites)
+        }
+    }
+}
+
+#[handler]
+
+pub async fn get_avg_resp(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetWebsiteAverageRespTime>
+) ->  Json<GetWebsiteAvgRespTimeOutput> {
+    let mut locked_s = s.lock().await;
+    let input_website = data.website;
+    let res = locked_s.get_average_resp_time(input_website).await;
+
+    match res {
+        Ok(avg) => {
+            Json(GetWebsiteAvgRespTimeOutput {
+                data: Some(avg),
+                success: true
+            })
+        },
+        Err(e) => {
+            println!("Error: {}", e);
+            Json(GetWebsiteAvgRespTimeOutput {
+                data: None,
+                success: false
+            }) 
+        }
+    }
+}
+
+#[handler]
+pub async fn get_uptime_percentage(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetUptimePercentage>
+) ->  Json<GetUptimePercentageOutput> {
+    let mut locked_s = s.lock().await;
+    let input_website = data.website;
+    let res = locked_s.get_average_uptime_percentage(input_website).await;
+
+    match res {
+        Ok(up) => {
+            Json(GetUptimePercentageOutput {
+                data: Some(up),
+                success: true
+            })
+        },
+        Err(e) => {
+            println!("Error: {}", e);
+            Json(GetUptimePercentageOutput {
+                data: None,
+                success: false
+            }) 
         }
     }
 }
