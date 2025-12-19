@@ -1,6 +1,6 @@
 use crate::store::Store;
 use chrono::{NaiveDateTime, Utc};
-use diesel::{prelude::*, result::Error};
+use diesel::{prelude::*, result::Error, sql_types::Double};
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -79,14 +79,14 @@ pub struct TotalViews {
 
 #[derive(QueryableByName, Debug, Serialize, Deserialize)]
 pub struct AvgRespTime {
-    #[diesel(sql_type = diesel::sql_types::Double)]
-    pub avg: f64,
+    #[diesel(sql_type = diesel::sql_types::Nullable<Double>)]
+    pub avg: Option<f64>,
 }
 
 #[derive(QueryableByName, Debug, Serialize, Deserialize)]
 pub struct UptimePercentage {
-    #[diesel(sql_type = diesel::sql_types::Double)]
-    pub uptime_percent: f64,
+    #[diesel(sql_type = diesel::sql_types::Nullable<Double>)]
+    pub uptime_percent: Option<f64>,
 }
 
 impl Store {
@@ -358,17 +358,26 @@ impl Store {
     }
 
     pub async fn get_average_resp_time(&mut self, input_website: String) -> Result<AvgRespTime, Error>{
-        use std::env;
-
-        let region_env = env::var("REGION").map_err(|_| Error::NotFound)?;
         let query = r#"
         SELECT AVG(response_time_ms)::DOUBLE PRECISION AS avg
         FROM website_tick
-        WHERE website_url = $1
+        WHERE website_url = $1;
+        "#;
+
+        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<AvgRespTime>(& mut self.conn).await?;
+
+        return Ok(result);
+    }
+
+    pub async fn get_average_resp_time_by_region(&mut self, input_website: String, input_region: String) -> Result<AvgRespTime, Error>{
+        let query = r#"
+        SELECT AVG(response_time_ms)::DOUBLE PRECISION AS avg
+        FROM website_tick
+        WHERE website_url = $1 
         AND region = $2;
         "#;
 
-        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).bind::<diesel::sql_types::Text, _>(region_env).get_result::<AvgRespTime>(& mut self.conn).await?;
+        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).bind::<diesel::sql_types::Text, _>(input_region).get_result::<AvgRespTime>(& mut self.conn).await?;
 
         return Ok(result);
     }
@@ -377,9 +386,27 @@ impl Store {
         &mut self,
         input_website: String,
     ) -> Result<UptimePercentage, Error> {
-        use std::env;
-
-        let region_env = env::var("REGION").map_err(|_| Error::NotFound)?;
+        let query = r#"
+            SELECT 
+                (COUNT(*) FILTER (WHERE status = 'Up') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE PRECISION
+                AS uptime_percent
+            FROM website_tick
+            WHERE website_url = $1;
+        "#;
+    
+        let result: UptimePercentage = diesel::sql_query(query)
+            .bind::<diesel::sql_types::Text, _>(input_website)
+            .get_result::<UptimePercentage>(&mut self.conn)
+            .await?;
+    
+        Ok(result)
+    }
+    
+    pub async fn get_average_uptime_percentage_by_region(
+        &mut self,
+        input_website: String,
+        input_region: String
+    ) -> Result<UptimePercentage, Error> {
         let query = r#"
             SELECT 
                 (COUNT(*) FILTER (WHERE status = 'Up') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE PRECISION
@@ -390,7 +417,7 @@ impl Store {
     
         let result: UptimePercentage = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .bind::<diesel::sql_types::Text, _>(region_env)
+            .bind::<diesel::sql_types::Text, _>(input_region)
             .get_result::<UptimePercentage>(&mut self.conn)
             .await?;
     

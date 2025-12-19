@@ -3,7 +3,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     auth_middleware::UserIdFromHeader,
-    request_input::{ CreateWebsiteInput, GetUptimePercentage, GetWebsiteAverageRespTime, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput, GetWebsiteDetailsLastHourInput, UsersWebsites },
+    request_input::{ CreateWebsiteInput, GetUptimePercentage, GetUptimePercentageByRegion, GetWebsiteAverageRespTime, GetWebsiteAverageRespTimeByRegion, GetWebsiteDetailsDailyInput, GetWebsiteDetailsHourlyInput, GetWebsiteDetailsLastHourInput, UsersWebsites },
     request_output::{ CreateWebsiteOutput, GetUptimePercentageOutput, GetWebsiteAvgRespTimeOutput, GetWebsiteDetailsDailyOutput, GetWebsiteDetailsHourlyOutput, GetWebsiteDetailsLastHourOutput },
 };
 use poem::{
@@ -139,6 +139,34 @@ pub async fn get_avg_resp(
 }
 
 #[handler]
+
+pub async fn get_avg_resp_by_region(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetWebsiteAverageRespTimeByRegion>
+) ->  Json<GetWebsiteAvgRespTimeOutput> {
+    let mut locked_s = s.lock().await;
+    let input_website = data.website;
+    let input_region = data.region;
+    let res = locked_s.get_average_resp_time_by_region(input_website, input_region).await;
+
+    match res {
+        Ok(avg) => {
+            Json(GetWebsiteAvgRespTimeOutput {
+                data: Some(avg),
+                success: true
+            })
+        },
+        Err(e) => {
+            println!("Error: {}", e);
+            Json(GetWebsiteAvgRespTimeOutput {
+                data: None,
+                success: false
+            }) 
+        }
+    }
+}
+
+#[handler]
 pub async fn get_uptime_percentage(
     Data(s): Data<&Arc<Mutex<Store>>>,
     Json(data): Json<GetUptimePercentage>
@@ -146,6 +174,33 @@ pub async fn get_uptime_percentage(
     let mut locked_s = s.lock().await;
     let input_website = data.website;
     let res = locked_s.get_average_uptime_percentage(input_website).await;
+
+    match res {
+        Ok(up) => {
+            Json(GetUptimePercentageOutput {
+                data: Some(up),
+                success: true
+            })
+        },
+        Err(e) => {
+            println!("Error: {}", e);
+            Json(GetUptimePercentageOutput {
+                data: None,
+                success: false
+            }) 
+        }
+    }
+}
+
+#[handler]
+pub async fn get_uptime_percentage_by_region(
+    Data(s): Data<&Arc<Mutex<Store>>>,
+    Json(data): Json<GetUptimePercentageByRegion>
+) ->  Json<GetUptimePercentageOutput> {
+    let mut locked_s = s.lock().await;
+    let input_website = data.website;
+    let input_region = data.region;
+    let res = locked_s.get_average_uptime_percentage_by_region(input_website, input_region).await;
 
     match res {
         Ok(up) => {

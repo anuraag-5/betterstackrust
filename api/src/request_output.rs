@@ -20,6 +20,11 @@ pub struct SigninUserOutput {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct UpdateEmailOutput {
+    pub success: bool
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct GetViewsPerPageOutput {
     pub data: Option<Vec<TotalViewsPerPage>>,
     pub success: bool

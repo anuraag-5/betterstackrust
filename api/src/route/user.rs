@@ -3,8 +3,8 @@ use tokio::sync::{Mutex};
 
 
 use crate::{
-    request_input::{CreateUserInput, SignInUserInput},
-    request_output::CreateUserOutput,
+    request_input::{CreateUserInput, SignInUserInput, UpdateEmailInput, UpdatePasswordInput},
+    request_output::{CreateUserOutput, UpdateEmailOutput},
 };
 use jsonwebtoken::{encode, EncodingKey, Header};
 use poem::{
@@ -82,6 +82,44 @@ pub async fn sign_in_user(
             Ok(resp)
         }
         Err(_) => Err(Error::from_status(StatusCode::NOT_FOUND)),
+    }
+}
+
+#[handler]
+pub async fn update_email(
+    Json(data): Json<UpdateEmailInput>,
+    Data(s): Data<&Arc<Mutex<Store>>>,
+) -> Json<UpdateEmailOutput> {
+    let input_user_id = data.user_id;
+    let new_email = data.new_email;
+
+    let mut locked_s = s.lock().await;
+    let result = locked_s.update_email(input_user_id, new_email).await;
+
+    match result {
+        Ok(_) => {
+            Json(UpdateEmailOutput { success: true })
+        }
+        Err(_) => Json(UpdateEmailOutput { success: false })
+    }
+}
+
+#[handler]
+pub async fn update_password(
+    Json(data): Json<UpdatePasswordInput>,
+    Data(s): Data<&Arc<Mutex<Store>>>,
+) -> Json<UpdateEmailOutput> {
+    let input_user_id = data.user_id;
+    let new_password = data.new_password;
+
+    let mut locked_s = s.lock().await;
+    let result = locked_s.update_password(input_user_id, new_password).await;
+
+    match result {
+        Ok(_) => {
+            Json(UpdateEmailOutput { success: true })
+        }
+        Err(_) => Json(UpdateEmailOutput { success: false })
     }
 }
 

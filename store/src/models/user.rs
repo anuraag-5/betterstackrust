@@ -80,4 +80,30 @@ impl Store {
             Err(_) => Err(diesel::result::Error::NotFound),
         }
     }
+
+    pub async fn update_email(&mut self,
+        input_user_id: String,
+        new_email: String
+    ) -> Result<usize, Error> {
+        let query = r#"
+        Update users set email = $1 where id = $2;
+        "#;
+
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_email).bind::<diesel::sql_types::Text, _> (input_user_id).execute(&mut self.conn).await?;
+
+        Ok(res)
+    }
+    
+    pub async fn update_password(&mut self,
+        input_user_id: String,
+        new_password: String
+    ) -> Result<usize, Error> {
+        let query = r#"
+        Update users set password = $1 where id = $2;
+        "#;
+
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_password).bind::<diesel::sql_types::Text, _> (input_user_id).execute(&mut self.conn).await?;
+
+        Ok(res)
+    }
 }

@@ -3,8 +3,8 @@ use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{get_user, total_unique_users, total_views, total_views_per_page};
-use crate::route::user::logout_user;
-use crate::route::website::{create_website, get_avg_resp, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_users_websites};
+use crate::route::user::{logout_user, update_email, update_password};
+use crate::route::website::{create_website, get_avg_resp, get_avg_resp_by_region, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_uptime_percentage_by_region, get_users_websites};
 use crate::route::{
     app::{snippet, track},
     user::{create_user, sign_in_user}
@@ -50,7 +50,11 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/user/logout", post(logout_user))
         .at("/api/user/get_all_websites", get(get_users_websites))
         .at("/api/get_avg_resp", post(get_avg_resp))
+        .at("/api/get_avg_resp_region", post(get_avg_resp_by_region))
         .at("/api/get_uptime_percentage", post(get_uptime_percentage))
+        .at("/api/get_uptime_percentage_region", post(get_uptime_percentage_by_region))
+        .at("/api/update_email", post(update_email))
+        .at("/api/update_password", post(update_password))
         .data(s)
         .with(cors)
         .with(CookieJarManager::new());

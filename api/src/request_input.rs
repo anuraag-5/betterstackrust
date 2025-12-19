@@ -22,6 +22,18 @@ pub struct SignInUserInput {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct UpdateEmailInput {
+    pub user_id: String,
+    pub new_email: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct UpdatePasswordInput {
+    pub user_id: String,
+    pub new_password: String,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct TrackingInput {
     pub visitor_id: String,
     pub page_url: String,
@@ -67,6 +79,18 @@ pub struct GetWebsiteAverageRespTime {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct GetWebsiteAverageRespTimeByRegion {
+    pub website: String,
+    pub region: String
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct GetUptimePercentage {
     pub website: String
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetUptimePercentageByRegion {
+    pub website: String,
+    pub region: String
 }
