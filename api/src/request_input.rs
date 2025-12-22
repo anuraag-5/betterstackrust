@@ -30,6 +30,7 @@ pub struct UpdateEmailInput {
 #[derive(Deserialize, Serialize)]
 pub struct UpdatePasswordInput {
     pub user_id: String,
+    pub old_password: String,
     pub new_password: String,
 }
 

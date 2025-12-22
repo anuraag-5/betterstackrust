@@ -96,13 +96,15 @@ impl Store {
     
     pub async fn update_password(&mut self,
         input_user_id: String,
+        old_password: String,
         new_password: String
     ) -> Result<usize, Error> {
         let query = r#"
-        Update users set password = $1 where id = $2;
+        Update users set password = $1 where id = $2 AND password = $3;
         "#;
 
-        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_password).bind::<diesel::sql_types::Text, _> (input_user_id).execute(&mut self.conn).await?;
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_password).bind::<diesel::sql_types::Text, _> (input_user_id)
+        .bind::<diesel::sql_types::Text, _>(old_password).execute(&mut self.conn).await?;
 
         Ok(res)
     }

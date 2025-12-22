@@ -110,10 +110,11 @@ pub async fn update_password(
     Data(s): Data<&Arc<Mutex<Store>>>,
 ) -> Json<UpdateEmailOutput> {
     let input_user_id = data.user_id;
+    let old_password = data.old_password;
     let new_password = data.new_password;
 
     let mut locked_s = s.lock().await;
-    let result = locked_s.update_password(input_user_id, new_password).await;
+    let result = locked_s.update_password(input_user_id, old_password, new_password).await;
 
     match result {
         Ok(_) => {
