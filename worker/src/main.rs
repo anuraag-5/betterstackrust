@@ -30,8 +30,7 @@ async fn main_loop() -> Result<(), Error> {
         )
     })?;
 
-    let mut str =
-        Store::default().await.map_err(|e| Error::new(std::io::ErrorKind::ConnectionRefused, e))?;
+    let mut str = Store::new().await;
 
     loop {
         let cloned_region = region.clone();
@@ -39,7 +38,8 @@ async fn main_loop() -> Result<(), Error> {
 
         let messages = r
             .x_read_group(&cloned_region, &cloned_worker_id)
-            .await.map_err(|e| {
+            .await
+            .map_err(|e| {
                 Error::new(
                     std::io::ErrorKind::InvalidData,
                     format!("XREADGROUP Error {}", e),
@@ -53,16 +53,16 @@ async fn main_loop() -> Result<(), Error> {
                     let stream_name = stream.key;
 
                     println!("{}", stream_name);
-                
+
                     for stream_id in stream.ids {
                         let message_id = stream_id.id;
                         let map = stream_id.map;
-                
+
                         let url_value = map.get("url").unwrap();
                         let url = redis::from_redis_value::<String>(url_value).unwrap();
                         println!("{}", url);
                         let _ = fetch_website(&mut str, url).await;
-                
+
                         // ✅ ACK MESSAGE
                         r.x_ack_bulk(&cloned_region, &[message_id]).await;
                     }
@@ -88,7 +88,10 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
     let res = reqwest::get(format!("https://{}", url)).await;
 
     let total_time = start_time.elapsed().as_millis() as i32;
-
+    let mut conn = s.pool.get().await.map_err(|e| {
+        println!("{}", e.to_string());
+        return Error::new(std::io::ErrorKind::ConnectionRefused, e);
+    })?;
     match res {
         Ok(rps) => {
             if rps.status() == StatusCode::OK {
@@ -104,13 +107,14 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
                 let val = diesel::insert_into(website_tick::table)
                     .values(&website_tick)
                     .returning(WebsiteTick::as_returning())
-                    .get_result(&mut s.conn).await;
+                    .get_result(&mut conn)
+                    .await;
 
                 match val {
                     Ok(w) => {
                         println!("{}", w.response_time_ms);
                         return Ok(());
-                    },
+                    }
                     Err(e) => {
                         println!("DB insert error: {:?}", e);
                         return Ok(());
@@ -129,7 +133,8 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
                 let _ = diesel::insert_into(website_tick::table)
                     .values(website_tick)
                     .returning(WebsiteTick::as_returning())
-                    .get_result(&mut s.conn).await;
+                    .get_result(&mut conn)
+                    .await;
 
                 return Ok(());
             }
@@ -148,7 +153,8 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
             let _ = diesel::insert_into(website_tick::table)
                 .values(website_tick)
                 .returning(WebsiteTick::as_returning())
-                .get_result(&mut s.conn).await;
+                .get_result(&mut conn)
+                .await;
 
             return Ok(());
         }

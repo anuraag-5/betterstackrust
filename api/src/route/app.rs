@@ -1,5 +1,4 @@
-use std::sync::{Arc};
-use tokio::sync::Mutex;
+use std::sync::Arc;
 use url::Url;
 
 use poem::{
@@ -75,7 +74,7 @@ pub async fn snippet() -> Response {
 }
 
 #[handler]
-pub async fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Store>>>) {
+pub async fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Store>>) {
     let page_url = data.page_url;
     let visitor_id = data.visitor_id;
     let referrer = data.referrer;
@@ -88,12 +87,12 @@ pub async fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Sto
             let domain = url.domain().unwrap();
             let current_path = url.path();
 
-            let mut locked_s = s.lock().await;
-            let website = locked_s.search_website(domain).await;
+    
+            let website = s.search_website(domain).await;
 
             match website {
                 Ok(w) => {
-                    locked_s.update_website_snippet(domain).await;
+                    let _ = s.update_website_snippet(domain).await;
                     let page_visit = PageVisit {
                         visitor_id,
                         referrer,
@@ -102,7 +101,7 @@ pub async fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Sto
                         website: w.url,
                     };
 
-                    let _inserted_data = locked_s.store_tracks(page_visit);
+                    let _inserted_data = s.store_tracks(page_visit).await;
                 }
                 Err(e) => {
                     println!("{}", e.to_string())
@@ -114,58 +113,96 @@ pub async fn track(Json(data): Json<TrackingInput>, Data(s): Data<&Arc<Mutex<Sto
 }
 
 #[handler]
-pub async fn total_views_per_page(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetViewsPerPageOutput> {
-  let mut locked_s = s.lock().await;
-  let res = locked_s.get_per_page_views(data.website).await;
+pub async fn total_views_per_page(
+    Data(s): Data<&Arc<Store>>,
+    Json(data): Json<GetViewsPerPageInput>,
+) -> Json<GetViewsPerPageOutput> {
+    let res = s.get_per_page_views(data.website).await;
 
-  match res {
-      Ok(d) => Json(GetViewsPerPageOutput { data: Some(d), success: true}),
-      Err(_) => Json(GetViewsPerPageOutput { data: None, success: false })
-  }
+    match res {
+        Ok(d) => Json(GetViewsPerPageOutput {
+            data: Some(d),
+            success: true,
+        }),
+        Err(_) => Json(GetViewsPerPageOutput {
+            data: None,
+            success: false,
+        }),
+    }
 }
 
 #[handler]
-pub async fn total_unique_users(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetTotalUniqueUsersOutput> {
-  let mut locked_s = s.lock().await;
-  let res = locked_s.get_total_unique_users(data.website).await;
+pub async fn total_unique_users(
+    Data(s): Data<&Arc<Store>>,
+    Json(data): Json<GetViewsPerPageInput>,
+) -> Json<GetTotalUniqueUsersOutput> {
+    let res = s.get_total_unique_users(data.website).await;
 
-  match res {
-      Ok(d) => Json(GetTotalUniqueUsersOutput { data: Some(d), success: true }),
-      Err(_) => Json(GetTotalUniqueUsersOutput { data: None, success: false })
-  }
+    match res {
+        Ok(d) => Json(GetTotalUniqueUsersOutput {
+            data: Some(d),
+            success: true,
+        }),
+        Err(_) => Json(GetTotalUniqueUsersOutput {
+            data: None,
+            success: false,
+        }),
+    }
 }
 #[handler]
-pub async fn total_views(Data(s): Data<&Arc<Mutex<Store>>>, Json(data): Json<GetViewsPerPageInput>) -> Json<GetTotalViewsOutput> {
-  let mut locked_s = s.lock().await;
-  let res = locked_s.get_total_views(data.website).await;
+pub async fn total_views(
+    Data(s): Data<&Arc<Store>>,
+    Json(data): Json<GetViewsPerPageInput>,
+) -> Json<GetTotalViewsOutput> {
+    let res = s.get_total_views(data.website).await;
 
-  match res {
-      Ok(d) => Json(GetTotalViewsOutput { data: Some(d), success: true }),
-      Err(_) => Json(GetTotalViewsOutput { data: None, success: false })
-  }
+    match res {
+        Ok(d) => Json(GetTotalViewsOutput {
+            data: Some(d),
+            success: true,
+        }),
+        Err(_) => Json(GetTotalViewsOutput {
+            data: None,
+            success: false,
+        }),
+    }
 }
 
 #[handler]
 pub async fn get_user(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     UserIdFromHeader(user_id): UserIdFromHeader,
 ) -> Json<User> {
-    let mut locked_s = s.lock().await;
     if user_id.len() <= 0 {
         print!("User id not found");
-        return Json( User { id: "()".to_string(), name: "()".to_string(), email: "()".to_string(), plan_type: "".to_string(), success: false })
+        return Json(User {
+            id: "()".to_string(),
+            name: "()".to_string(),
+            email: "()".to_string(),
+            plan_type: "".to_string(),
+            success: false,
+        });
     }
-    let res = locked_s.get_user(user_id).await;
+    let res = s.get_user(user_id).await;
 
     match res {
-        Some(user) => Json(User {
-            id: user.id.clone(),
-            name: user.name.clone(),
-            email: user.email.clone(),
-            plan_type: user.plan_type.clone(),
-            success: true,
-        }),
-        None => Json(User {
+        Ok(user) => match user {
+            Some(user) => Json(User {
+                id: user.id.clone(),
+                name: user.name.clone(),
+                email: user.email.clone(),
+                plan_type: user.plan_type.clone(),
+                success: true,
+            }),
+            None => Json(User {
+                id: "".to_string(),
+                name: "".to_string(),
+                email: "".to_string(),
+                plan_type: "".to_string(),
+                success: false,
+            }),
+        },
+        Err(_) => Json(User {
             id: "".to_string(),
             name: "".to_string(),
             email: "".to_string(),

@@ -23,11 +23,13 @@ pub struct UserOutput {
 
 impl Store {
     pub async fn sign_up(
-        &mut self,
+        &self,
         username: String,
         user_password: String,
         user_name: String,
     ) -> Result<String, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let new_user = User {
             id: Uuid::new_v4().to_string(),
             email: username,
@@ -39,7 +41,7 @@ impl Store {
         let result = diesel::insert_into(crate::schema::users::table)
             .values(new_user)
             .returning(User::as_returning())
-            .get_result(&mut self.conn).await;
+            .get_result(&mut conn).await;
 
         match result {
             Ok(u) => {
@@ -52,16 +54,18 @@ impl Store {
     }
 
     pub async fn sign_in(
-        &mut self,
+        &self,
         input_email: String,
         user_password: String,
     ) -> Result<UserOutput, Error> {
         use crate::schema::users::dsl::*;
 
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let signed_in_user = users
             .filter(email.eq(input_email))
             .select(User::as_select())
-            .load(&mut self.conn).await;
+            .load(&mut conn).await;
 
         match signed_in_user {
             Ok(u) => {
@@ -81,30 +85,34 @@ impl Store {
         }
     }
 
-    pub async fn update_email(&mut self,
+    pub async fn update_email(&self,
         input_user_id: String,
         new_email: String
     ) -> Result<usize, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let query = r#"
         Update users set email = $1 where id = $2;
         "#;
 
-        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_email).bind::<diesel::sql_types::Text, _> (input_user_id).execute(&mut self.conn).await?;
+        let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_email).bind::<diesel::sql_types::Text, _> (input_user_id).execute(&mut conn).await?;
 
         Ok(res)
     }
     
-    pub async fn update_password(&mut self,
+    pub async fn update_password(&self,
         input_user_id: String,
         old_password: String,
         new_password: String
     ) -> Result<usize, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let query = r#"
         Update users set password = $1 where id = $2 AND password = $3;
         "#;
 
         let res = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(new_password).bind::<diesel::sql_types::Text, _> (input_user_id)
-        .bind::<diesel::sql_types::Text, _>(old_password).execute(&mut self.conn).await?;
+        .bind::<diesel::sql_types::Text, _>(old_password).execute(&mut conn).await?;
 
         Ok(res)
     }

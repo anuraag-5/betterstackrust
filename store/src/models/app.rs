@@ -14,37 +14,31 @@ pub struct PageVisit {
 }
 
 impl Store {
-
-    pub async fn get_user(&mut self, input_user_id: String) -> Option<UserOutput> {
+    pub async fn get_user(&self, input_user_id: String) -> Result<Option<UserOutput>, Error> {
         use crate::schema::users::dsl::*;
-
-        let user = users.filter(id.eq(input_user_id)).select(User::as_select()).get_result(&mut self.conn).await;
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+        let user = users.filter(id.eq(input_user_id)).select(User::as_select()).get_result(&mut conn).await;
 
         match user {
             Ok(user) => {
-                Some(UserOutput { id: user.id, email: user.email, name: user.name, plan_type: user.plan_name })
+                Ok(Some(UserOutput { id: user.id, email: user.email, name: user.name, plan_type: user.plan_name }))
             },
             Err(_) => {
                 println!("User not found");
-                None
+                Ok(None)
             }
         }
     }
 
-    pub async fn store_tracks(&mut self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
+    pub async fn store_tracks(&self, page_visit_data: PageVisit) -> Result<PageVisit, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let created_page_visit = diesel::insert_into(page_visits::table)
             .values(page_visit_data)
             .returning(PageVisit::as_returning())
-            .get_result(&mut self.conn).await?;
+            .get_result(&mut conn).await?;
 
         Ok(created_page_visit)
     }
-
-    // pub fn get_total_views(&mut self, input_website_url: String) -> Result<i64, Error>{
-    //     use crate::schema::page_visits::dsl::*;
-
-    //     let total_visitors = page_visits.filter(website.eq(input_website_url)).select(count(website)).get_result::<i64>(&mut self.conn)?;
-
-    //     Ok(total_visitors)
-    // }
 }

@@ -1,5 +1,4 @@
 use std::sync::{Arc};
-use tokio::sync::Mutex;
 
 use crate::{
     auth_middleware::UserIdFromHeader,
@@ -15,13 +14,13 @@ use store::{store::Store};
 #[handler]
 pub async fn create_website(
     Json(data): Json<CreateWebsiteInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>
+    Data(s): Data<&Arc<Store>>
 ) -> Json<CreateWebsiteOutput> {
     let url = data.url;
     let about = data.about;
     let user_id= data.user_id;
-    let mut locked_s = s.lock().await;
-    let created_website = locked_s.create_website(user_id, url, about).await;
+    
+    let created_website = s.create_website(user_id, url, about).await;
     match created_website {
         Ok(w) => Json(CreateWebsiteOutput {
             website_id: w.id,
@@ -36,11 +35,11 @@ pub async fn create_website(
 
 #[handler]
 pub async fn get_details_hourly(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetWebsiteDetailsHourlyInput>
 ) -> Json<GetWebsiteDetailsHourlyOutput> {
-    let mut locked_s = s.lock().await;
-    let website_result = locked_s.get_website_details_hourly(data.website, data.user_id, data.hour).await;
+    
+    let website_result = s.get_website_details_hourly(data.website, data.user_id, data.hour).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsHourlyOutput {
             data: Some(w),
@@ -55,11 +54,11 @@ pub async fn get_details_hourly(
 
 #[handler]
 pub async fn get_details_daily(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetWebsiteDetailsDailyInput>
 ) -> Json<GetWebsiteDetailsDailyOutput> {
-    let mut locked_s = s.lock().await;
-    let website_result = locked_s.get_website_details_daily(data.website, data.user_id, data.day).await;
+    
+    let website_result = s.get_website_details_daily(data.website, data.user_id, data.day).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsDailyOutput {
             data: Some(w),
@@ -74,11 +73,11 @@ pub async fn get_details_daily(
 
 #[handler]
 pub async fn get_details_last_hour(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetWebsiteDetailsLastHourInput>
 ) -> Json<GetWebsiteDetailsLastHourOutput> {
-    let mut locked_s = s.lock().await;
-    let website_result = locked_s.get_website_details_last_hour(data.website, data.user_id).await;
+    
+    let website_result = s.get_website_details_last_hour(data.website, data.user_id).await;
     match website_result {
         Ok(w) => Json(GetWebsiteDetailsLastHourOutput {
             data: Some(w),
@@ -93,11 +92,11 @@ pub async fn get_details_last_hour(
 
 #[handler]
 pub async fn get_users_websites(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     UserIdFromHeader(user_id): UserIdFromHeader
 ) -> Json<UsersWebsites> {
-    let mut locked_s = s.lock().await;
-    let res = locked_s.get_users_all_websites(user_id).await;
+    
+    let res = s.get_users_all_websites(user_id).await;
 
     match res {
         Ok(websites) => {
@@ -114,12 +113,12 @@ pub async fn get_users_websites(
 #[handler]
 
 pub async fn get_avg_resp(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetWebsiteAverageRespTime>
 ) ->  Json<GetWebsiteAvgRespTimeOutput> {
-    let mut locked_s = s.lock().await;
+    
     let input_website = data.website;
-    let res = locked_s.get_average_resp_time(input_website).await;
+    let res = s.get_average_resp_time(input_website).await;
 
     match res {
         Ok(avg) => {
@@ -141,13 +140,13 @@ pub async fn get_avg_resp(
 #[handler]
 
 pub async fn get_avg_resp_by_region(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetWebsiteAverageRespTimeByRegion>
 ) ->  Json<GetWebsiteAvgRespTimeOutput> {
-    let mut locked_s = s.lock().await;
+    
     let input_website = data.website;
     let input_region = data.region;
-    let res = locked_s.get_average_resp_time_by_region(input_website, input_region).await;
+    let res = s.get_average_resp_time_by_region(input_website, input_region).await;
 
     match res {
         Ok(avg) => {
@@ -168,12 +167,12 @@ pub async fn get_avg_resp_by_region(
 
 #[handler]
 pub async fn get_uptime_percentage(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetUptimePercentage>
 ) ->  Json<GetUptimePercentageOutput> {
-    let mut locked_s = s.lock().await;
+    
     let input_website = data.website;
-    let res = locked_s.get_average_uptime_percentage(input_website).await;
+    let res = s.get_average_uptime_percentage(input_website).await;
 
     match res {
         Ok(up) => {
@@ -194,13 +193,12 @@ pub async fn get_uptime_percentage(
 
 #[handler]
 pub async fn get_uptime_percentage_by_region(
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
     Json(data): Json<GetUptimePercentageByRegion>
-) ->  Json<GetUptimePercentageOutput> {
-    let mut locked_s = s.lock().await;
+) ->  Json<GetUptimePercentageOutput> {    
     let input_website = data.website;
     let input_region = data.region;
-    let res = locked_s.get_average_uptime_percentage_by_region(input_website, input_region).await;
+    let res = s.get_average_uptime_percentage_by_region(input_website, input_region).await;
 
     match res {
         Ok(up) => {

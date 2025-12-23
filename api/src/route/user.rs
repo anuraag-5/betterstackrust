@@ -1,6 +1,4 @@
 use std::{env, sync::{Arc}};
-use tokio::sync::{Mutex};
-
 
 use crate::{
     request_input::{CreateUserInput, SignInUserInput, UpdateEmailInput, UpdatePasswordInput},
@@ -25,14 +23,13 @@ pub struct Claims {
 #[handler]
 pub async fn create_user(
     Json(data): Json<CreateUserInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
 ) -> Result<Json<CreateUserOutput>, Error> {
     let username = data.username;
     let user_password = data.password;
     let name = data.name;
 
-    let mut locked_s = s.lock().await;
-    let result = locked_s
+    let result = s
         .sign_up(username, user_password, name).await
         .map_err(|_| Error::from_status(StatusCode::CONFLICT))?;
 
@@ -45,13 +42,12 @@ pub async fn create_user(
 #[handler]
 pub async fn sign_in_user(
     Json(data): Json<SignInUserInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
 ) -> Result<Response, Error> {
     let username = data.username;
     let user_password = data.password;
 
-    let mut locked_s = s.lock().await;
-    let result = locked_s.sign_in(username, user_password).await;
+    let result = s.sign_in(username, user_password).await;
 
     match result {
         Ok(user) => {
@@ -88,13 +84,12 @@ pub async fn sign_in_user(
 #[handler]
 pub async fn update_email(
     Json(data): Json<UpdateEmailInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
 ) -> Json<UpdateEmailOutput> {
     let input_user_id = data.user_id;
     let new_email = data.new_email;
 
-    let mut locked_s = s.lock().await;
-    let result = locked_s.update_email(input_user_id, new_email).await;
+    let result = s.update_email(input_user_id, new_email).await;
 
     match result {
         Ok(_) => {
@@ -107,14 +102,13 @@ pub async fn update_email(
 #[handler]
 pub async fn update_password(
     Json(data): Json<UpdatePasswordInput>,
-    Data(s): Data<&Arc<Mutex<Store>>>,
+    Data(s): Data<&Arc<Store>>,
 ) -> Json<UpdateEmailOutput> {
     let input_user_id = data.user_id;
     let old_password = data.old_password;
     let new_password = data.new_password;
 
-    let mut locked_s = s.lock().await;
-    let result = locked_s.update_password(input_user_id, old_password, new_password).await;
+    let result = s.update_password(input_user_id, old_password, new_password).await;
 
     match result {
         Ok(_) => {

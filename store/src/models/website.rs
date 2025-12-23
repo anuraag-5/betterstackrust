@@ -91,11 +91,14 @@ pub struct UptimePercentage {
 
 impl Store {
     pub async fn create_website(
-        &mut self,
+        &self,
         u_i: String,
         new_url: String,
         input_about: String,
     ) -> Result<Website, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let new_website = Website {
             id: Uuid::new_v4().to_string(),
             url: new_url,
@@ -109,7 +112,7 @@ impl Store {
         let created_website = diesel::insert_into(crate::schema::websites::table)
             .values(new_website)
             .returning(Website::as_returning())
-            .get_result(&mut self.conn)
+            .get_result(&mut conn)
             .await;
 
         match created_website {
@@ -119,12 +122,15 @@ impl Store {
     }
 
     pub async fn get_website_details_hourly(
-        &mut self,
+        &self,
         input_website_url: String,
         input_user_id: String,
         mut hours: String,
     ) -> Result<Vec<HourlyView>, Error> {
         use crate::schema::websites::dsl::*;
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
 
         if hours.trim().is_empty() {
             hours = "2 hours".to_string();
@@ -134,7 +140,7 @@ impl Store {
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)
+            .first(&mut conn)
             .await?;
 
         let query = r#"
@@ -152,19 +158,22 @@ impl Store {
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
             .bind::<diesel::sql_types::Text, _>(hours)
-            .load::<HourlyView>(&mut self.conn)
+            .load::<HourlyView>(&mut conn)
             .await?;
 
         Ok(results)
     }
 
     pub async fn get_website_details_daily(
-        &mut self,
+        &self,
         input_website_url: String,
         input_user_id: String,
         mut days: String,
     ) -> Result<Vec<DailyView>, Error> {
         use crate::schema::websites::dsl::*;
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
 
         if days.trim().is_empty() {
             days = "2 day".to_string();
@@ -174,7 +183,7 @@ impl Store {
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)
+            .first(&mut conn)
             .await?;
 
         let query = r#"
@@ -197,24 +206,27 @@ impl Store {
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
             .bind::<diesel::sql_types::Text, _>(days)
-            .load::<DailyView>(&mut self.conn)
+            .load::<DailyView>(&mut conn)
             .await?;
 
         Ok(results)
     }
 
     pub async fn get_website_details_last_hour(
-        &mut self,
+        &self,
         input_website_url: String,
         input_user_id: String,
     ) -> Result<Vec<MinuteView>, Error> {
         use crate::schema::websites::dsl::*;
 
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let _website_result = websites
             .filter(url.eq(&input_website_url))
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .first(&mut self.conn)
+            .first(&mut conn)
             .await?;
 
         // Query: generate a 1-minute series for the past 60 minutes
@@ -237,67 +249,86 @@ impl Store {
 
         let results = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
-            .load::<MinuteView>(&mut self.conn)
+            .load::<MinuteView>(&mut conn)
             .await?;
 
         Ok(results)
     }
 
-    pub async fn search_website(&mut self, input_url: &str) -> Result<Website, Error> {
+    pub async fn search_website(&self, input_url: &str) -> Result<Website, Error> {
         use crate::schema::websites::dsl::*;
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
 
         let found_website = websites
             .filter(url.eq(input_url))
             .select(Website::as_select())
-            .first(&mut self.conn)
+            .first(&mut conn)
             .await?;
 
         Ok(found_website)
     }
 
     pub async fn get_all_websites(
-        &mut self,
+        &self,
     ) -> Result<Vec<(String, String, String, bool)>, diesel::result::Error> {
         use crate::schema::websites::dsl::*;
 
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let websites_result = websites
             .select((url, id, user_id, is_snippet_added))
-            .load::<(String, String, String, bool)>(&mut self.conn)
+            .load::<(String, String, String, bool)>(&mut conn)
             .await?;
 
         Ok(websites_result)
     }
 
     pub async fn get_users_all_websites(
-        &mut self,
+        &self,
         input_user_id: String,
     ) -> Result<Vec<Website>, Error> {
         use crate::schema::websites::dsl::*;
 
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let websites_result = websites
             .filter(user_id.eq(input_user_id))
             .select(Website::as_select())
-            .load(&mut self.conn)
+            .load(&mut conn)
             .await?;
 
         Ok(websites_result)
     }
 
-    pub async fn update_website_snippet(&mut self, input_website_url: &str) -> () {
+    pub async fn update_website_snippet(&self, input_website_url: &str) -> Result<(), Error> {
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"
         UPDATE websites SET is_snippet_added=TRUE where url = $1;
         "#;
 
         let _ = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website_url)
-            .execute(&mut self.conn)
+            .execute(&mut conn)
             .await;
+
+        Ok(())
     }
 
     pub async fn get_per_page_views(
-        &mut self,
+        &self,
         input_website: String,
     ) -> Result<Vec<TotalViewsPerPage>, Error> {
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"SELECT 
             page_path,
             COUNT(*) AS total_views
@@ -313,16 +344,20 @@ impl Store {
 
         let res = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .load::<TotalViewsPerPage>(&mut self.conn)
+            .load::<TotalViewsPerPage>(&mut conn)
             .await?;
 
         Ok(res)
     }
 
     pub async fn get_total_unique_users(
-        &mut self,
+        &self,
         input_website: String,
     ) -> Result<TotalUniqueUsers, Error> {
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"
         SELECT
         COUNT(DISTINCT visitor_id) AS unique_users
@@ -333,13 +368,17 @@ impl Store {
 
         let res = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .get_result::<TotalUniqueUsers>(&mut self.conn)
+            .get_result::<TotalUniqueUsers>(&mut conn)
             .await?;
 
         Ok(res)
     }
 
-    pub async fn get_total_views(&mut self, input_website: String) -> Result<TotalViews, Error> {
+    pub async fn get_total_views(&self, input_website: String) -> Result<TotalViews, Error> {
+
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"
             SELECT 
                 COUNT(*) AS total_views
@@ -351,25 +390,32 @@ impl Store {
 
         let res = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .get_result::<TotalViews>(&mut self.conn)
+            .get_result::<TotalViews>(&mut conn)
             .await?;
 
         Ok(res)
     }
 
-    pub async fn get_average_resp_time(&mut self, input_website: String) -> Result<AvgRespTime, Error>{
+    pub async fn get_average_resp_time(&self, input_website: String) -> Result<AvgRespTime, Error>{
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"
         SELECT AVG(response_time_ms)::DOUBLE PRECISION AS avg
         FROM website_tick
         WHERE website_url = $1;
         "#;
 
-        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<AvgRespTime>(& mut self.conn).await?;
+        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).get_result::<AvgRespTime>(&mut conn).await?;
 
         return Ok(result);
     }
 
-    pub async fn get_average_resp_time_by_region(&mut self, input_website: String, input_region: String) -> Result<AvgRespTime, Error>{
+    pub async fn get_average_resp_time_by_region(&self, input_website: String, input_region: String) -> Result<AvgRespTime, Error>{
+        
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
+
         let query = r#"
         SELECT AVG(response_time_ms)::DOUBLE PRECISION AS avg
         FROM website_tick
@@ -377,15 +423,17 @@ impl Store {
         AND region = $2;
         "#;
 
-        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).bind::<diesel::sql_types::Text, _>(input_region).get_result::<AvgRespTime>(& mut self.conn).await?;
+        let result: AvgRespTime = diesel::sql_query(query).bind::<diesel::sql_types::Text, _>(input_website).bind::<diesel::sql_types::Text, _>(input_region).get_result::<AvgRespTime>(&mut conn).await?;
 
         return Ok(result);
     }
 
     pub async fn get_average_uptime_percentage(
-        &mut self,
+        &self,
         input_website: String,
     ) -> Result<UptimePercentage, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let query = r#"
             SELECT 
                 (COUNT(*) FILTER (WHERE status = 'Up') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE PRECISION
@@ -396,17 +444,19 @@ impl Store {
     
         let result: UptimePercentage = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
-            .get_result::<UptimePercentage>(&mut self.conn)
+            .get_result::<UptimePercentage>(&mut conn)
             .await?;
     
         Ok(result)
     }
     
     pub async fn get_average_uptime_percentage_by_region(
-        &mut self,
+        &self,
         input_website: String,
         input_region: String
     ) -> Result<UptimePercentage, Error> {
+        let mut conn = self.pool.get().await
+        .map_err(|e| { println!("{}", e.to_string()); return Error::NotFound })?;
         let query = r#"
             SELECT 
                 (COUNT(*) FILTER (WHERE status = 'Up') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE PRECISION
@@ -418,7 +468,7 @@ impl Store {
         let result: UptimePercentage = diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(input_website)
             .bind::<diesel::sql_types::Text, _>(input_region)
-            .get_result::<UptimePercentage>(&mut self.conn)
+            .get_result::<UptimePercentage>(&mut conn)
             .await?;
     
         Ok(result)

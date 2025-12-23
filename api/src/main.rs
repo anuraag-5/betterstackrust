@@ -11,11 +11,9 @@ use crate::route::{
 };
 use poem::middleware::{CookieJarManager, Cors};
 use std::{
-    io::Error,
     sync::{Arc},
 };
 use store::store::Store;
-use tokio::sync::Mutex;
 
 pub mod auth_middleware;
 pub mod request_input;
@@ -26,9 +24,7 @@ pub mod route;
 async fn main() -> Result<(), std::io::Error> {
     dotenv().ok();
 
-    let s = Arc::new(Mutex::new(
-        Store::default().await.map_err(|e| Error::new(std::io::ErrorKind::NotConnected, e))?,
-    ));
+    let s = Arc::new(Store::new().await);
 
     let cors = Cors::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
