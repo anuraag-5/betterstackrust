@@ -8,7 +8,7 @@ async fn main_loop() -> Result<(), Box<dyn std::error::Error>> {
 
     dotenv().ok();
     let mut r = Redis::default().await?;
-    let mut s = Store::new().await;
+    let s = Store::new().await;
 
     loop {
         let websites = s.get_all_websites().await?;
