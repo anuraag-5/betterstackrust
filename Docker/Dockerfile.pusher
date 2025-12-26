@@ -1,0 +1,11 @@
+FROM rustlang/rust:nightly
+
+WORKDIR /app
+
+COPY ./store ./store
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+
+COPY . .
+
+CMD [ "cargo", "run", "-p", "pusher" ]
