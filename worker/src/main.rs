@@ -116,12 +116,10 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
                         return Ok(());
                     }
                     Err(e) => {
-                        println!("DB insert error: {:?}", e);
                         return Ok(());
                     }
                 }
             } else {
-                println!("Not Ok");
                 let website_tick = WebsiteTick {
                     id: Uuid::new_v4().to_string(),
                     response_time_ms: total_time,
@@ -141,7 +139,6 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
         }
 
         Err(e) => {
-            println!("Unknown: {}", e);
             let website_tick = WebsiteTick {
                 id: Uuid::new_v4().to_string(),
                 response_time_ms: total_time,
