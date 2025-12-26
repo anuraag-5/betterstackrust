@@ -22,6 +22,7 @@ pub mod route;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+    
     dotenv().ok();
 
     let s = Arc::new(Store::new().await);
