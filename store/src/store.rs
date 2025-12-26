@@ -14,7 +14,7 @@ pub struct Store {
 }
 
 impl Store {
-    pub async fn new() -> Self {
+    pub async fn new() -> Self  {
         let config = Config::default();
         
         let mut manager_config = ManagerConfig::default();
