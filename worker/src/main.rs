@@ -115,7 +115,7 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
                         println!("{}", w.response_time_ms);
                         return Ok(());
                     }
-                    Err(e) => {
+                    Err(_) => {
                         return Ok(());
                     }
                 }
@@ -138,7 +138,7 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
             }
         }
 
-        Err(e) => {
+        Err(_) => {
             let website_tick = WebsiteTick {
                 id: Uuid::new_v4().to_string(),
                 response_time_ms: total_time,

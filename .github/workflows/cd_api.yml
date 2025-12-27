@@ -40,8 +40,8 @@ jobs:
                     --name nexusapi \
                     --restart always \
                     -p 3001:3001 \
-                    -e DATABASE_URL=${{ secrets.DATABASE_URL}} \
-                    -e JWT_SECRET=${{ secrets.JWT_SECRET}} \
+                    -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                    -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
                     anuraaag5/nexusapi:${{ github.sha }}
                     
                   sudo docker image prune -f

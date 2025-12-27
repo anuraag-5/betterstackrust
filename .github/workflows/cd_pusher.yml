@@ -23,3 +23,24 @@ jobs:
                 file: ./Docker/Dockerfile.pusher
                 push: true
                 tags: anuraaag5/nexuspusher:${{ github.sha }}
+
+            - name: Deploy to VM
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                host: ${{ secrets.PUSHER_VM_HOST }}
+                username: ${{ secrets.VM_USERNAME }}
+                key: ${{ secrets.VM_SSH_KEY }}
+                script: |
+                  sudo docker pull anuraaag5/nexuspusher:${{ github.sha }}
+
+                  sudo docker stop nexuspusher || true
+                  sudo docker rm nexuspusher || true
+
+                  sudo docker run -d \
+                    --name nexuspusher \
+                    --restart always \
+                    -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                    -e REDIS_URL=${{ secrets.REDIS_URL }} \
+                    anuraaag5/nexuspusher:${{ github.sha }}
+                    
+                  sudo docker image prune -f

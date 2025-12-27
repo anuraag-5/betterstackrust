@@ -23,3 +23,59 @@ jobs:
                 file: ./Docker/Dockerfile.worker
                 push: true
                 tags: anuraaag5/nexusworker:${{ github.sha }}
+
+    prod-india:
+      needs: build
+      runs-on: ubuntu-latest
+      environment: prod-india
+      steps:
+        - name: Deploy to VM
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.VM_HOST }}
+            username: ${{ secrets.VM_USERNAME }}
+            key: ${{ secrets.VM_SSH_KEY }}
+            script: |
+              sudo docker pull anuraaag5/nexusworker:${{ github.sha }}
+
+              sudo docker stop nexusworker || true
+              sudo docker rm nexusworker || true
+
+              sudo docker run -d \
+                --name nexusworker \
+                --restart always \
+                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                -e REDIS_URL=${{ secrets.REDIS_URL }} \
+                -e REGION=${{ secrets.REGION }} \
+                -e WORKER_ID=${{ secrets.WORKER_ID }} \
+                anuraaag5/nexusworker:${{ github.sha }}
+                    
+              sudo docker image prune -f
+
+    prod-usa:
+      needs: build
+      runs-on: ubuntu-latest
+      environment: prod-india
+      steps:
+        - name: Deploy to VM
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.VM_HOST }}
+            username: ${{ secrets.VM_USERNAME }}
+            key: ${{ secrets.VM_SSH_KEY }}
+            script: |
+              sudo docker pull anuraaag5/nexusworker:${{ github.sha }}
+
+              sudo docker stop nexusworker || true
+              sudo docker rm nexusworker || true
+
+              sudo docker run -d \
+                --name nexusworker \
+                --restart always \
+                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                -e REDIS_URL=${{ secrets.REDIS_URL }} \
+                -e REGION=${{ secrets.REGION }} \
+                -e WORKER_ID=${{ secrets.WORKER_ID }} \
+                anuraaag5/nexusworker:${{ github.sha }}
+                    
+              sudo docker image prune -f
