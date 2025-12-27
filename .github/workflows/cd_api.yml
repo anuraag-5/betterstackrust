@@ -40,7 +40,7 @@ jobs:
                     --name nexusapi \
                     --restart always \
                     -p 3001:3001 \
-                    -e DATABASE_URL=postgresql://neondb_owner:npg_rd0axVuF9BiL@ep-nameless-mode-a420b2i5-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require \
+                    -e DATABASE_URL=${{ secrets.DATABASE_URL}} \
                     -e JWT_SECRET=yoyobiatch \
                     anuraaag5/nexusapi:${{ github.sha }}
                     
