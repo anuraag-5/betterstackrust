@@ -1,11 +1,20 @@
-FROM rustlang/rust:nightly
+FROM rustlang/rust:nightly AS builder
 
 WORKDIR /app
 
-COPY ./store ./store
-COPY ./Cargo.lock ./Cargo.lock
-COPY ./Cargo.toml ./Cargo.toml
-
 COPY . .
 
-CMD [ "cargo", "run", "-p", "worker" ]
+RUN cargo build --release -p worker
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/worker ./server
+
+CMD ["./server"]

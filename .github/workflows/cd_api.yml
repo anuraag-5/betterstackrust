@@ -23,3 +23,25 @@ jobs:
                 file: ./Docker/Dockerfile.api
                 push: true
                 tags: anuraaag5/nexusapi:${{ github.sha }}
+
+            - name: Deploy to VM
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                host: ${{ secrets.VM_HOST }}
+                username: ${{ secrets.VM_USERNAME }}
+                key: ${{ secrets.VM_SSH_KEY }}
+                script: |
+                  docker pull anuraaag5/nexusapi:${{ github.sha }}
+
+                  docker stop nexus_api || true
+                  docker rm nexus_api || true
+
+                  docker run -d \
+                    --name nexus_api \
+                    --restart always \
+                    -p 3001:3001 \
+                    -e DATABASE_URL=postgresql://neondb_owner:npg_rd0axVuF9BiL@ep-nameless-mode-a420b2i5-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require \
+                    -e JWT_SECRET=yoyobiatch \
+                    anuraaag5/nexusapi:${{ github.sha }}
+                    
+                  docker image prune -f
