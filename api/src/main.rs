@@ -3,7 +3,7 @@ use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{get_user, total_unique_users, total_views, total_views_per_page};
-use crate::route::user::{logout_user, update_email, update_password};
+use crate::route::user::{google_auth, logout_user, update_email, update_password};
 use crate::route::website::{create_website, get_avg_resp, get_avg_resp_by_region, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_uptime_percentage_by_region, get_users_websites};
 use crate::route::{
     app::{snippet, track},
@@ -38,6 +38,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/website/daily", post(get_details_daily))
         .at("/api/user/signup", post(create_user))
         .at("/api/user/signin", post(sign_in_user))
+        .at("/api/auth/google", post(google_auth))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
         .at("/api/get_total_views_per_page", post(total_views_per_page))

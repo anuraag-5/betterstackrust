@@ -22,6 +22,12 @@ pub struct SignInUserInput {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct SignInUserInputWithGoogle {
+    pub username: String,
+    pub user_name: String,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct UpdateEmailInput {
     pub user_id: String,
     pub new_email: String,

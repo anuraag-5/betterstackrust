@@ -36,7 +36,7 @@ pub async fn snippet() -> Response {
             time_stamp: Date.now().toString(),
           };
 
-          fetch("https://13.233.126.41/api/track", {
+          fetch("https://api.nexus.speeedops.com/api/track", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),

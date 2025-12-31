@@ -1,7 +1,7 @@
 use std::{env, sync::{Arc}};
 
 use crate::{
-    request_input::{CreateUserInput, SignInUserInput, UpdateEmailInput, UpdatePasswordInput},
+    request_input::{CreateUserInput, SignInUserInput, SignInUserInputWithGoogle, UpdateEmailInput, UpdatePasswordInput},
     request_output::{CreateUserOutput, UpdateEmailOutput},
 };
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -78,6 +78,65 @@ pub async fn sign_in_user(
             Ok(resp)
         }
         Err(_) => Err(Error::from_status(StatusCode::NOT_FOUND)),
+    }
+}
+
+#[handler]
+pub async fn google_auth(
+    Json(data): Json<SignInUserInputWithGoogle>,
+    Data(s): Data<&Arc<Store>>,
+) -> Result<Response, Error> {
+    let username = data.username;
+    let user_password = String::from("GOOGLE_AUTH");
+    let user_name = data.user_name;
+
+    let result = s.sign_in_with_google(username.clone()).await;
+    let exp = (chrono::Utc::now() + chrono::Duration::days(7)).timestamp() as usize;
+    match result {
+        Ok(user) => {
+            let my_claims = Claims {
+                sub: user.id,
+                exp: exp.clone(),
+            };
+            let token = encode(
+                &Header::default(),
+                &my_claims,
+                &EncodingKey::from_secret(env::var("JWT_SECRET").map_err(|_| Error::from_string("Invalid ENV Secret", StatusCode::EXPECTATION_FAILED))?.as_ref()),
+            )
+            .map_err(|_| Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))?;
+            
+            let mut resp = Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(format!("{{\"jwt\":\"{}\"}}", token));
+
+            Ok(resp)
+        }
+        Err(_) => {
+            let new_user = s.sign_up(username, user_password, user_name).await;
+            match new_user {
+                Ok(u) => {
+                    let my_claims = Claims {
+                        sub: u,
+                        exp,
+                    };
+                    let token = encode(
+                        &Header::default(),
+                        &my_claims,
+                        &EncodingKey::from_secret(env::var("JWT_SECRET").map_err(|_| Error::from_string("Invalid ENV Secret", StatusCode::EXPECTATION_FAILED))?.as_ref()),
+                    )
+                    .map_err(|_| Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))?;
+                    
+                    let mut resp = Response::builder()
+                        .status(StatusCode::OK)
+                        .header(header::CONTENT_TYPE, "application/json")
+                        .body(format!("{{\"jwt\":\"{}\"}}", token));
+        
+                    Ok(resp)
+                },
+                Err(_) => Err(Error::from_status(StatusCode::INTERNAL_SERVER_ERROR))
+            }
+        },
     }
 }
 
