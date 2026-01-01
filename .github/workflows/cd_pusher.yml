@@ -32,10 +32,8 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             sudo docker pull anuraaag5/nexuspusher:${{ github.sha }}
-
             sudo docker stop nexuspusher || true
             sudo docker rm nexuspusher || true
-
             sudo docker run -d \
               --name nexuspusher \
               --restart always \
