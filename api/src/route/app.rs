@@ -2,10 +2,7 @@ use std::sync::Arc;
 use url::Url;
 
 use poem::{
-    handler,
-    http::header,
-    web::{Data, Json},
-    Response,
+    Response, handler, http::{StatusCode, header}, web::{Data, Json}
 };
 use store::{models::app::PageVisit, store::Store};
 
@@ -210,4 +207,11 @@ pub async fn get_user(
             success: false,
         }),
     }
+}
+
+#[handler]
+pub async fn get_health() -> Response {
+    Response::builder()
+        .status(StatusCode::OK)
+        .body("OK")
 }

@@ -2,7 +2,7 @@ use dotenvy::dotenv;
 use poem::http::Method;
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
-use crate::route::app::{get_user, total_unique_users, total_views, total_views_per_page};
+use crate::route::app::{get_health, get_user, total_unique_users, total_views, total_views_per_page};
 use crate::route::user::{google_auth, logout_user, update_email, update_password};
 use crate::route::website::{create_website, get_avg_resp, get_avg_resp_by_region, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_uptime_percentage_by_region, get_users_websites};
 use crate::route::{
@@ -53,6 +53,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/get_uptime_percentage_region", post(get_uptime_percentage_by_region))
         .at("/api/update_email", post(update_email))
         .at("/api/update_password", post(update_password))
+        .at("/health", get(get_health))
         .data(s)
         .with(cors)
         .with(CookieJarManager::new());
