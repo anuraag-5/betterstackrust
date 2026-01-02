@@ -39,7 +39,7 @@ jobs:
               sudo docker pull anuraaag5/nexusworker:${{ github.sha }}
 
               sudo docker stop nexusworker || true
-              sudo docker rm nexusworker || true
+              sudo docker rm -f nexusworker || true
 
               sudo docker run -d \
                 --name nexusworker \
@@ -67,7 +67,7 @@ jobs:
               sudo docker pull anuraaag5/nexusworker:${{ github.sha }}
 
               sudo docker stop nexusworker || true
-              sudo docker rm nexusworker || true
+              sudo docker rm -f nexusworker || true
 
               sudo docker run -d \
                 --name nexusworker \
