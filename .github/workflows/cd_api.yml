@@ -34,7 +34,8 @@ jobs:
                   sudo docker pull anuraaag5/nexusapi:${{ github.sha }}
 
                   sudo docker stop nexusapi || true
-                  sudo docker rm nexusapi || true
+                  sudo docker rm -f nexusapi || true
+
 
                   sudo docker run -d \
                     --name nexusapi \
