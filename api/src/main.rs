@@ -32,6 +32,7 @@ async fn main() -> Result<(), std::io::Error> {
         .allow_credentials(true);
 
     let app = Route::new()
+    .at("/api/health", get(get_health))
         .at("/api/website", post(create_website))
         .at("/api/website/last_hour", post(get_details_last_hour))
         .at("/api/website/hourly", post(get_details_hourly))
@@ -53,7 +54,6 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/get_uptime_percentage_region", post(get_uptime_percentage_by_region))
         .at("/api/update_email", post(update_email))
         .at("/api/update_password", post(update_password))
-        .at("/health", get(get_health))
         .data(s)
         .with(cors)
         .with(CookieJarManager::new());
