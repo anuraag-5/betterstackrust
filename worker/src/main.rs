@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use dotenvy::dotenv;
+use redis::RedisError;
 use redisstreams::redis::Redis;
 use reqwest::StatusCode;
 use std::time::Duration;
@@ -30,21 +31,22 @@ async fn main_loop() -> Result<(), Error> {
         )
     })?;
 
+    let _ = ensure_group(&mut r, "betteruptime:website", &region).await;
+
     let mut str = Store::new().await;
 
     loop {
         let cloned_region = region.clone();
         let cloned_worker_id = worker_id.clone();
 
-        let messages = r
-            .x_read_group(&cloned_region, &cloned_worker_id)
-            .await
-            .map_err(|e| {
-                Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("XREADGROUP Error {}", e),
-                )
-            })?;
+        let messages = match r.x_read_group(&cloned_region, &cloned_worker_id).await {
+            Ok(m) => m,
+            Err(e) if e.to_string().contains("NOGROUP") => {
+                let _ = ensure_group(&mut r, "betteruptime:website", &cloned_region).await;
+                continue;
+            }
+            Err(e) => return Err(Error::new(std::io::ErrorKind::Other, e)),
+        };
 
         match messages {
             Some(s) => {
@@ -156,4 +158,18 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
             return Ok(());
         }
     }
+}
+
+async fn ensure_group(r: &mut Redis, stream: &str, group: &str) -> Result<(), RedisError> {
+    let res: Result<(), RedisError> = redis::cmd("XGROUP")
+        .arg("CREATE")
+        .arg(stream)
+        .arg(group)
+        .arg("$")
+        .arg("MKSTREAM")
+        .query_async(&mut r.conn)
+        .await;
+
+    // Ignore BUSYGROUP error
+    Ok(())
 }
