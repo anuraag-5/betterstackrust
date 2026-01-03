@@ -4,7 +4,7 @@ use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{get_health, get_user, total_unique_users, total_views, total_views_per_page};
 use crate::route::user::{google_auth, logout_user, update_email, update_password};
-use crate::route::website::{create_website, get_avg_resp, get_avg_resp_by_region, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_uptime_percentage_by_region, get_users_websites};
+use crate::route::website::{create_website, get_avg_resp, get_avg_resp_by_region, get_details_daily, get_details_hourly, get_details_last_hour, get_uptime_percentage, get_uptime_percentage_by_region, get_users_websites, get_website_recent_status};
 use crate::route::{
     app::{snippet, track},
     user::{create_user, sign_in_user}
@@ -42,6 +42,7 @@ async fn main() -> Result<(), std::io::Error> {
         .at("/api/auth/google", post(google_auth))
         .at("/api/snippet", get(snippet))
         .at("/api/track", post(track))
+        .at("/api/get_status", post(get_website_recent_status))
         .at("/api/get_total_views_per_page", post(total_views_per_page))
         .at("/api/get_total_unique_users", post(total_unique_users))
         .at("/api/get_total_views", post(total_views))

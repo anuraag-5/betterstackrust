@@ -5,6 +5,13 @@ use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub enum WebsiteStatus {
+    UP,
+    DOWN,
+    UNKNOWN,
+}
+
 #[derive(Queryable, Insertable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::websites)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -36,6 +43,12 @@ pub struct HourlyView {
 
     #[diesel(sql_type = diesel::sql_types::BigInt)]
     pub views: i64,
+}
+
+#[derive(QueryableByName, Debug, Serialize, Deserialize)]
+pub struct Status {
+    #[diesel(sql_type = diesel::sql_types::Text)]
+    pub status: String
 }
 
 #[derive(QueryableByName, Debug, Serialize, Deserialize)]
@@ -121,6 +134,48 @@ impl Store {
         }
     }
 
+    pub async fn get_website_recent_status(
+        &self,
+        input_website_url: String,
+        input_user_id: String,
+    ) -> Result<Status, Error> {
+        use crate::schema::websites::dsl::*;
+    
+        let mut conn = self.pool.get().await.map_err(|e| {
+            println!("{}", e);
+            Error::NotFound
+        })?;
+    
+        // 🔐 Verify website ownership
+        let _website = websites
+            .filter(url.eq(&input_website_url))
+            .filter(user_id.eq(&input_user_id))
+            .select(Website::as_select())
+            .first(&mut conn)
+            .await?;
+    
+        // 🔎 Fetch most recent tick
+        let query = r#"
+            SELECT status
+            FROM website_tick
+            WHERE website_url = $1
+            ORDER BY "createdAt" DESC
+            LIMIT 1;
+        "#;
+    
+        let result = diesel::sql_query(query)
+            .bind::<diesel::sql_types::Text, _>(&input_website_url)
+            .get_result::<Status>(&mut conn)
+            .await;
+    
+        match result {
+            Ok(s) => {
+                Ok(s)
+            }
+            Err(_) => Ok(Status { status: "Unknown".into() })
+        }
+    }
+    
     pub async fn get_website_details_hourly(
         &self,
         input_website_url: String,

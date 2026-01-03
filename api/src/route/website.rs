@@ -9,7 +9,7 @@ use poem::{
     handler,
     web::{Data, Json},
 };
-use store::{store::Store};
+use store::{models::website::Status, store::Store};
 
 #[handler]
 pub async fn create_website(
@@ -29,6 +29,21 @@ pub async fn create_website(
         Err(e) => Json(CreateWebsiteOutput {
             website_id: e.to_string(),
             success: false,
+        }),
+    }
+}
+
+#[handler]
+pub async fn get_website_recent_status(
+    Data(s): Data<&Arc<Store>>,
+    Json(data): Json<GetWebsiteDetailsLastHourInput>
+) -> Json<Status> {
+    
+    let website_result = s.get_website_recent_status(data.website, data.user_id).await;
+    match website_result {
+        Ok(s) => Json(s),
+        Err(_) => Json(Status{
+            status: "Unknown".into()
         }),
     }
 }
