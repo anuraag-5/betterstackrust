@@ -68,4 +68,5 @@ async fn main() -> Result<(), std::io::Error> {
     Server::new(TcpListener::bind("0.0.0.0:3001"))
         .run(app)
         .await
+        
 }
