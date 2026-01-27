@@ -161,7 +161,7 @@ async fn fetch_website(s: &mut Store, url: String) -> Result<(), Error> {
 }
 
 async fn ensure_group(r: &mut Redis, stream: &str, group: &str) -> Result<(), RedisError> {
-    let res: Result<(), RedisError> = redis::cmd("XGROUP")
+    let _: Result<(), RedisError> = redis::cmd("XGROUP")
         .arg("CREATE")
         .arg(stream)
         .arg(group)

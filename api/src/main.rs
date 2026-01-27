@@ -1,5 +1,5 @@
 use dotenvy::dotenv;
-use poem::http::{header, Method};
+use poem::http::{Method};
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
 
 use crate::route::app::{
