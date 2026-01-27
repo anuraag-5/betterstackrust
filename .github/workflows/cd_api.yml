@@ -33,18 +33,8 @@ jobs:
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            sudo docker pull anuraaag5/nexusapi:${{ github.sha }}
-
+            sudo docker pull anuraag5/nexusapi:${{ github.sha }}
             sudo docker stop nexusapi || true
             sudo docker rm -f nexusapi || true
-
-
-            sudo docker run -d \
-              --name nexusapi \
-              --restart always \
-              -p 3001:3001 \
-              -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              anuraaag5/nexusapi:${{ github.sha }}
-              
+            sudo docker run -d --name nexusapi --restart always -p 3001:3001 -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e JWT_SECRET="${{ secrets.JWT_SECRET }}" anuraag5/nexusapi:${{ github.sha }}
             sudo docker image prune -f
