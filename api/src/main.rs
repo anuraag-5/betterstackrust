@@ -1,7 +1,6 @@
 use dotenvy::dotenv;
 use poem::http::{Method};
 use poem::{get, listener::TcpListener, post, EndpointExt, Route, Server};
-
 use crate::route::app::{
     get_health, get_user, total_unique_users, total_views, total_views_per_page,
 };
